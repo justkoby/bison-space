@@ -31,6 +31,25 @@ const jobs = [
   { src: '655157849_18576827080028532_8504288172167838348_n.jpg', out: 'public/images/cta/cta-black-lace-recline.jpg', width: 1400 },
   // Intro (right-hand frame)
   { src: '510947006_18516550396028532_4337548753963758024_n.jpg', out: 'public/images/intro/intro-coin-veil-crimson.jpg', width: 1200 },
+  // Portfolio projects — full compositions; thumbnails crop via CSS only
+  { src: '514761872_18516510034028532_8940365432531496851_n.jpg', out: 'public/images/portfolio/pf-coin-veil-close.jpg', width: 1400 },
+  { src: '510947006_18516550396028532_4337548753963758024_n.jpg', out: 'public/images/portfolio/pf-coin-veil-profile.jpg', width: 1400 },
+  { src: '534773018_18525539095028532_49713319230917388_n.jpg', out: 'public/images/portfolio/pf-violet-hair-b.jpg', width: 1400 },
+  { src: '534321820_18525538801028532_5360667161331553302_n.jpg', out: 'public/images/portfolio/pf-violet-hair-a.jpg', width: 1400 },
+  { src: '536272295_4157335217917212_8160582562257868661_n.jpg', out: 'public/images/portfolio/pf-violet-hair-c.jpg', width: 1400 },
+  { src: '653936468_18575238802028532_769438114173300586_n.jpg', out: 'public/images/portfolio/pf-white-knit-close.jpg', width: 1400 },
+  { src: '652841823_18575322217028532_4290020076570703823_n.jpg', out: 'public/images/portfolio/pf-white-knit-stand.jpg', width: 1400 },
+  { src: '524317515_18520779532028532_3089869771722408630_n.jpg', out: 'public/images/portfolio/pf-graduation-cap.jpg', width: 1400 },
+  { src: '743426302_18609955105028532_8546451521101002707_n.jpg', out: 'public/images/portfolio/pf-graduation-seated.jpg', width: 1400 },
+  { src: '587773474_18546059302028532_1483298272940848785_n.jpg', out: 'public/images/portfolio/pf-denim-front.jpg', width: 1400 },
+  { src: '587890991_18546056647028532_5506571435115328023_n.jpg', out: 'public/images/portfolio/pf-denim-side.jpg', width: 1400 },
+  { src: '639499628_18511467421072630_2505642586468621046_n.jpg', out: 'public/images/portfolio/pf-street-lookbook.jpg', width: 1400 },
+  { src: '572129139_18331516786233977_2242280137691200924_n.jpg', out: 'public/images/portfolio/pf-crimson-gown.jpg', width: 1400 },
+  { src: '476122683_18487494175028532_8112736968925207418_n.jpg', out: 'public/images/portfolio/pf-gold-sculpture.jpg', width: 1400 },
+  { src: '587898058_1563539225093866_6755207508844125920_n.jpg', out: 'public/images/portfolio/pf-makeup-chair.jpg', width: 1400 },
+  { src: '434245577_956692009361926_4321562633065059117_n.jpg', out: 'public/images/portfolio/pf-sequin-studio.jpg', width: 1400 },
+  { src: '582221676_18321178120173431_9112519512759085918_n.jpg', out: 'public/images/portfolio/pf-white-blazer.jpg', width: 1400 },
+  { src: '673101749_18584857819028532_3496570279453549902_n.jpg', out: 'public/images/portfolio/pf-gold-hoops.jpg', width: 1400 },
 ];
 
 const kb = (n) => `${(n / 1024).toFixed(0)} kB`;

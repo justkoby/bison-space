@@ -19,13 +19,11 @@ export const links = {
 
 export type NavItem = { label: string; href: string; external?: boolean };
 
-/**
- * Portfolio / About point at in-page sections for now; when the standalone
- * pages land, change these hrefs to '/portfolio' and '/about' here only.
- */
+/** Hash hrefs point at homepage sections; SiteLink resolves them from any route. */
 export const nav: NavItem[] = [
-  { label: 'Portfolio', href: '#work' },
-  { label: 'Services', href: '#services' },
+  { label: 'What We Shoot', href: '#shoot' },
+  { label: 'Packages', href: '#packages' },
+  { label: 'Portfolio', href: '/portfolio' },
   { label: 'About', href: '#about' },
   { label: 'Contact', href: '#contact' },
 ];
@@ -45,18 +43,19 @@ export const intro = {
   imageId: 'intro-coin-veil-crimson',
 } as const;
 
-export type WorkCategory = {
+export type ShootCategory = {
   slug: string;
   title: string;
   blurb: string;
   imageId: string;
 };
 
-export const workCategories: WorkCategory[] = [
+/** The four session categories Bison’s Space actually offers. */
+export const shootCategories: ShootCategory[] = [
   {
     slug: 'portraits',
     title: 'Portraits',
-    blurb: 'Studio and location portraits built on presence, not poses.',
+    blurb: 'Studio and location portrait sittings built on presence, not poses.',
     imageId: 'work-portrait-white-blazer',
   },
   {
@@ -68,7 +67,7 @@ export const workCategories: WorkCategory[] = [
   {
     slug: 'events',
     title: 'Events',
-    blurb: 'Graduations, celebrations and milestones, photographed with care.',
+    blurb: 'Graduations, celebrations and milestones, covered with care.',
     imageId: 'work-events-graduation',
   },
   {
@@ -79,48 +78,53 @@ export const workCategories: WorkCategory[] = [
   },
 ];
 
-export const workSection = {
-  eyebrow: 'Selected Work',
-  headline: 'Four ways into the archive.',
+export const shootSection = {
+  eyebrow: 'What We Shoot',
+  headline: 'Four kinds of sessions, directed with intent.',
+  cardAction: 'See packages',
   linkLabel: 'View full portfolio',
-  linkHref: '#work', // becomes '/portfolio' when the page lands
+  linkHref: '/portfolio',
 } as const;
 
-export type Service = {
-  index: string;
-  title: string;
-  body: string;
+export type Package = {
+  id: string;
+  categorySlug: string;
+  name: string;
+  description: string;
+  imageId: string;
+  /** Rendered only once the studio has confirmed them. */
+  duration?: string;
+  retouchedPhotos?: string;
+  outfits?: string;
+  price?: string;
+  confirmed: boolean;
 };
 
-export const servicesSection = {
+/**
+ * Confirmed packages only. Left empty until Lazarus supplies names, specs and
+ * rates — until then the packages section shows the custom-session enquiry
+ * card per category instead of inventing anything.
+ */
+export const packages: Package[] = [];
+
+export const packagesSection = {
   eyebrow: 'Photography Services',
-  headline: 'Sessions, directed end to end.',
+  headline: 'Sessions & packages.',
   note: 'Every enquiry is answered personally by Lazarus. Rates are quoted per project scope.',
-  enquireLabel: 'Enquire',
+  bookLabel: 'Book',
+  custom: {
+    name: 'Custom session',
+    description:
+      'A session shaped around your idea — location, looks and delivery agreed together before we shoot.',
+    cta: 'Enquire for details',
+  },
 } as const;
 
-export const services: Service[] = [
-  {
-    index: '01',
-    title: 'Portrait Sessions',
-    body: 'Individual, family and milestone portraits, directed from first frame to final retouch.',
-  },
-  {
-    index: '02',
-    title: 'Beauty & Fashion',
-    body: 'Editorial and campaign imagery developed with makeup artists and stylists.',
-  },
-  {
-    index: '03',
-    title: 'Events',
-    body: 'Considered coverage for graduations, launches and celebrations.',
-  },
-  {
-    index: '04',
-    title: 'Brand & Commercial Shoots',
-    body: 'Product and brand imagery for campaigns, catalogues and social.',
-  },
-];
+/** WhatsApp click-to-chat with the category pre-filled in the message. */
+export const whatsappEnquiry = (categoryTitle: string) =>
+  `${links.whatsapp}?text=${encodeURIComponent(
+    `Hi Bison’s Space! I’d like to enquire about a ${categoryTitle} session.`,
+  )}`;
 
 export const about = {
   eyebrow: 'About Lazarus',
@@ -149,3 +153,29 @@ export const footer = {
   studioNote: 'Sessions by appointment.',
   copyright: `© ${new Date().getFullYear()} Bison’s Space. Photography by Lazarus Nukunu.`,
 } as const;
+
+/**
+ * Floating support widget.
+ * `mapsUrl` is the Google Maps link for the studio: it was NOT included in the
+ * supplied project materials, so it stays empty here (the “Find the studio”
+ * action renders as pending) until the real URL is pasted in — never guessed.
+ */
+export const support = {
+  buttonLabel: 'Support',
+  closeLabel: 'Close support panel',
+  heading: 'How can we help?',
+  note:
+    'Sessions are arranged by appointment. Send us your preferred date and the type of shoot you have in mind.',
+  catalogUrl: 'https://wa.me/c/233554713435',
+  mapsUrl: '', // TODO(supplied materials): Google Maps URL for the Adenta studio — missing.
+  pendingHint: 'Link pending',
+} as const;
+
+export type SupportAction = { id: string; label: string; hint: string; href: string };
+
+export const supportActions: SupportAction[] = [
+  { id: 'book', label: 'Book a shoot', hint: 'WhatsApp', href: links.whatsapp },
+  { id: 'packages', label: 'View packages', hint: 'WhatsApp catalogue', href: support.catalogUrl },
+  { id: 'studio', label: 'Find the studio', hint: 'Google Maps', href: support.mapsUrl },
+  { id: 'ask', label: 'Ask a question', hint: 'WhatsApp', href: links.whatsapp },
+];

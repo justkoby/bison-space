@@ -1,5 +1,6 @@
 import Logo from './Logo';
 import { nav, links, brand, footer } from '../content/site';
+import { SiteLink } from '../router';
 
 export default function Footer() {
   return (
@@ -13,9 +14,9 @@ export default function Footer() {
         <div className="footer__col">
           <h3 className="footer__heading">Explore</h3>
           {nav.map((item) => (
-            <a className="footer__link" href={item.href} key={item.label}>
+            <SiteLink className="footer__link" href={item.href} key={item.label}>
               {item.label}
-            </a>
+            </SiteLink>
           ))}
         </div>
 

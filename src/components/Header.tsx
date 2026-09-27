@@ -1,17 +1,28 @@
 import { useEffect, useState } from 'react';
 import Logo from './Logo';
 import { nav, links } from '../content/site';
+import { SiteLink } from '../router';
 
-export default function Header() {
+type HeaderProps = {
+  /** 'overlay' floats above the homepage hero; 'solid' docks on other routes. */
+  variant?: 'overlay' | 'solid';
+};
+
+export default function Header({ variant = 'overlay' }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    // The solid variant is always docked; only the homepage overlay floats.
+    if (variant === 'solid') {
+      setScrolled(false);
+      return;
+    }
     const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.7);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
@@ -22,17 +33,21 @@ export default function Header() {
 
   return (
     <>
-      <header className={`header${scrolled ? ' header--scrolled' : ''}`}>
+      <header
+        className={`header${variant === 'solid' ? ' header--page' : ''}${
+          scrolled ? ' header--scrolled' : ''
+        }`}
+      >
         <div className="header__inner">
-          <a className="header__logo" href="#top" aria-label="Bison’s Space — home">
+          <SiteLink className="header__logo" href="#top" ariaLabel="Bison’s Space — home">
             <Logo />
-          </a>
+          </SiteLink>
 
           <nav className="header__nav" aria-label="Primary">
             {nav.map((item) => (
-              <a key={item.label} className="header__link" href={item.href}>
+              <SiteLink key={item.label} className="header__link" href={item.href}>
                 {item.label}
-              </a>
+              </SiteLink>
             ))}
             <a
               className="btn btn--solid header__cta"
@@ -72,9 +87,14 @@ export default function Header() {
         </div>
         <nav className="menu__nav" aria-label="Mobile">
           {nav.map((item) => (
-            <a key={item.label} className="menu__link" href={item.href} onClick={() => setMenuOpen(false)}>
+            <SiteLink
+              key={item.label}
+              className="menu__link"
+              href={item.href}
+              onNavigate={() => setMenuOpen(false)}
+            >
               {item.label}
-            </a>
+            </SiteLink>
           ))}
         </nav>
         <a
