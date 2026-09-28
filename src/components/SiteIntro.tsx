@@ -33,6 +33,7 @@ export default function SiteIntro() {
   const [playing, setPlaying] = useState(false);
   const [centre, setCentre] = useState<{ x: number; y: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const skipRef = useRef<HTMLButtonElement>(null);
   const finishedRef = useRef(false);
 
   const finish = () => {
@@ -52,6 +53,13 @@ export default function SiteIntro() {
     if (!active) return;
     document.body.classList.add('intro-lock');
     return () => document.body.classList.remove('intro-lock');
+  }, [active]);
+
+  // Move focus to the Skip button while the intro is up so keyboard users can
+  // reach it immediately (the overlay is no longer hidden from assistive tech).
+  useEffect(() => {
+    if (!active) return;
+    skipRef.current?.focus();
   }, [active]);
 
   // Measure the centre of the "O" (zoom origin + reveal circle centre) once fonts settle.
@@ -120,16 +128,15 @@ export default function SiteIntro() {
       className={`intro-root${playing ? ' is-playing' : ''}`}
       ref={rootRef}
       style={style}
-      aria-hidden="true"
     >
       <div className="intro-curtain">
         <div className="intro__zoom">
-          <h1 className="intro__word">
+          <h1 className="intro__word" aria-hidden="true">
             BIS<span className="intro__o">O</span>NS SPACE
           </h1>
         </div>
       </div>
-      <button type="button" className="intro__skip" onClick={finish}>
+      <button type="button" className="intro__skip" ref={skipRef} onClick={finish}>
         Skip
       </button>
     </div>

@@ -45,26 +45,28 @@ export default function ProjectPage({ slug }: { slug: string }) {
       </header>
 
       <figure className="project__lead">
-        <img
-          src={lead.src}
-          alt={lead.alt}
-          loading="eager"
-          decoding="async"
+        <button
+          type="button"
+          className="project__zoom"
+          aria-label={`Enlarge image: ${lead.alt}`}
           onClick={() => setLightboxIndex(0)}
-        />
+        >
+          <img src={lead.src} alt={lead.alt} loading="eager" decoding="async" />
+        </button>
       </figure>
 
       {sequence.length > 0 && (
         <div className="project__sequence">
           {sequence.map((image, index) => (
             <figure className="project__shot" key={image.src}>
-              <img
-                src={image.src}
-                alt={image.alt}
-                loading="lazy"
-                decoding="async"
+              <button
+                type="button"
+                className="project__zoom"
+                aria-label={`Enlarge image: ${image.alt}`}
                 onClick={() => setLightboxIndex(index + 1)}
-              />
+              >
+                <img src={image.src} alt={image.alt} loading="lazy" decoding="async" />
+              </button>
             </figure>
           ))}
         </div>

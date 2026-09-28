@@ -1506,6 +1506,13 @@ body.intro-lock {
   color: rgba(244, 237, 226, 0.72);
 }
 
+/* 404 view: two escape hatches (home / portfolio) side by side. */
+.not-found__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 32px;
+}
+
 .project__head {
   max-width: 760px;
   margin-bottom: clamp(28px, 3.6vw, 48px);
@@ -1552,6 +1559,24 @@ body.intro-lock {
   object-fit: contain;
   background: var(--ink-soft);
   cursor: zoom-in;
+}
+
+/* Keyboard-accessible wrapper that opens the lightbox; visually transparent so
+   the lead/sequence images keep their exact layout and click-to-zoom behaviour. */
+.project__zoom {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  background: transparent;
+  cursor: zoom-in;
+  line-height: 0;
+}
+
+.project__zoom:focus-visible {
+  outline: 2px solid var(--camel);
+  outline-offset: 4px;
 }
 
 .project__actions {

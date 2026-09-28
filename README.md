@@ -13,6 +13,8 @@ npm run prepare:images   # re-generates public/images + copies brand assets (ide
 npm run dev              # http://localhost:5173
 npm run build            # production build
 npm run typecheck
+npm run verify:content   # pure-logic checks on the public-read mapping (no DB needed)
+npm run verify:supabase  # RLS/public-read integration checks against a local Supabase (skips if none)
 node scripts/screenshot.mjs   # headless captures into .preview/ (desktop, mobile, menu, full page)
 node scripts/screenshot-intro.mjs # captures the opening sequence beats (hold/reveal/after/skip/reduced/session)
 node scripts/verify-loop.mjs  # proves the hero wall loop is seamless (pixel-compare one full loop apart)
@@ -89,6 +91,8 @@ the already-running photo-wall hero. Total ≈1.7s.
   approved composition and endless movement are unchanged.
 - First hero frames are preloaded before the reveal starts (capped at 3s) so no blank wall shows.
 - Plays once per browser session (`sessionStorage`); a visible Skip button ends it immediately.
+  The wordmark is decorative (`aria-hidden`) and Skip takes focus while the overlay is up, so
+  keyboard and screen-reader users can dismiss the intro — the overlay itself is not hidden.
 - `prefers-reduced-motion` never mounts the overlay — the homepage shows at once.
 - Page scroll is locked only while the overlay is up and released on reveal/skip, so navigation and
   scrolling are never delayed afterwards.
@@ -149,7 +153,8 @@ only; other routes get a docked solid header (`.header--page`).
   an “Enquire about a similar shoot” WhatsApp action, and prev/next project links.
 - **Lightbox** ([Lightbox.tsx](src/components/Lightbox.tsx)) — full-screen viewer with
   next/previous buttons, ← → keys, Escape to close, swipe on touch, tap-backdrop close,
-  focus restore and a body scroll lock.
+  focus restore and a body scroll lock. Every gallery image that opens it is wrapped in a
+  labelled `<button>`, so the lightbox is reachable by keyboard as well as by click.
 - **Data** ([portfolio.ts](src/content/portfolio.ts)) — 12 published projects from 18 unique
   photographs grouped by shoot (no photograph repeats across projects); neutral descriptive
   titles only — no client names, dates or credits are invented. Thumbnails crop via
@@ -161,6 +166,56 @@ route they navigate home first and then scroll, so the services anchors work sit
 `node scripts/verify-portfolio.mjs` (against `vite preview`) asserts direct loads and
 refresh of both routes, the filters, that every tile opens a real project, lightbox keys and
 swipe, cross-route anchors, lead-image proportions, and captures desktop + mobile evidence.
+
+Unknown routes render a dedicated **Page not found** view ([NotFoundPage.tsx](src/pages/NotFoundPage.tsx))
+with links home and to the portfolio — the app never silently substitutes another page.
+
+## Content dashboard (admin)
+
+A private **`/admin`** dashboard (Supabase Auth + Postgres + Storage) lets allowlisted
+studio accounts edit the portfolio, hero wall, packages and site settings. It is
+**additive and off by default**: the public site keeps rendering `src/content/*.ts`,
+and the whole admin UI + Supabase client are code-split into a separate chunk that
+only loads on `/admin` — nothing changes for visitors.
+
+- **Setup, migrations, RLS/Storage policies, seeding and the verification steps:**
+  see [docs/admin-setup.md](docs/admin-setup.md). Environment variables are documented
+  in [.env.example](.env.example) (copy to `.env.local`).
+- **Cutover flag:** `VITE_CONTENT_SOURCE` is `static` (default) until you verify the
+  migration, then set it to `supabase`. The Supabase read path falls back to the
+  static modules on any error, so the site never renders blank.
+- **Security:** Row Level Security is the boundary. Public visitors read published
+  content only; only accounts listed in `admin_users` can write or upload. The
+  service-role key is never in browser code. Existing photographs, slugs, ordering
+  and alt text are seeded verbatim; no prices, client names or Maps URL are invented.
+
+```
+supabase/
+  config.toml                    # local Supabase CLI config
+  migrations/*_schema.sql        # enums, tables, indexes, is_admin(), triggers
+  migrations/*_rls.sql           # RLS policies + get_public_content() RPC (published-only)
+  migrations/*_storage.sql       # 'media' bucket + Storage policies (public read, admin write)
+  seed.sql                       # current content, preserving slugs + image associations
+src/
+  lib/supabaseClient.ts          # browser client (anon key only)
+  lib/types.ts                   # DB row + domain types
+  data/mapping.ts                # pure published-only/ordering helpers (unit-tested)
+  data/contentApi.ts             # public reads + adapters + static fallback
+  data/adminApi.ts               # admin CRUD + uploads + validation
+  auth/AuthContext.tsx           # session + admin-allowlist state
+  admin/                         # lazy-loaded dashboard (login, editors, namespaced CSS)
+```
+
+## Deployment (SPA routing)
+
+The client-side router uses real paths (`/portfolio`, `/portfolio/:slug`), so the host must
+fall back to `index.html` for any unmatched route or a direct visit / refresh 404s.
+
+> **Assumption:** no deployment host was configured in the repo, so a **Vercel** configuration
+> ([vercel.json](vercel.json)) is provided: it builds with `npm run build`, serves from `dist`,
+> and rewrites every path to `/index.html` (SPA fallback). If the site is deployed elsewhere
+> (Netlify, S3/CloudFront, nginx, …), replace `vercel.json` with that host's equivalent rewrite
+> rule — e.g. Netlify `/*  /index.html  200` in `public/_redirects`.
 
 ## Support widget
 
@@ -217,5 +272,7 @@ with the frame one full loop later; byte-identical PNGs confirm the loop is seam
 
 Standalone About page (the nav About entry still points at the homepage `#about` section).
 When it lands, update `about.linkHref` in `src/content/site.ts` from `#about` to `/about`.
-The Portfolio page has shipped; its content module is ready to swap for Supabase — the admin
-dashboard that writes to it is the remaining piece.
+The Portfolio page has shipped, and the Supabase admin dashboard that writes its content
+is built and code-split under `/admin` (see [docs/admin-setup.md](docs/admin-setup.md)). It
+stays behind `VITE_CONTENT_SOURCE=static` until the migration is verified against a live
+Supabase — the public site continues to render the checked-in modules until then.

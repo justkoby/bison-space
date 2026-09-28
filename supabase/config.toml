@@ -1,0 +1,40 @@
+# Supabase CLI project configuration for Bison's Space.
+# Used for LOCAL development/verification only (`supabase start`, `supabase db reset`).
+# The live/hosted project is configured in the Supabase dashboard; this file mirrors it.
+
+project_id = "bisons-space"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[db.pooler]
+enabled = false
+
+[studio]
+enabled = true
+
+[auth]
+enabled = true
+# The public site + admin run on the Vite dev/preview ports locally.
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173", "http://localhost:4173"]
+
+[auth.email]
+# Admins are provisioned explicitly (service-role) — no open self-signup.
+enable_signup = false
+enable_confirmations = false
+
+[storage]
+enabled = true
+# Photographs are large; allow generous uploads (validated again client-side).
+file_size_limit = "12MiB"
+
+[edge_runtime]
+enabled = false
