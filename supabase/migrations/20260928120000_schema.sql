@@ -77,7 +77,7 @@ create index project_gallery_project_idx on public.project_gallery (project_id, 
 create table public.hero_columns (
   id            public.hero_column primary key,
   duration      integer not null default 50,   -- seconds for one loop
-  offset        integer not null default 0,    -- negative offset so seams don't align
+  "offset"      integer not null default 0,    -- negative offset so seams don't align
   display_order integer not null default 0
 );
 

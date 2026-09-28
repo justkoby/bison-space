@@ -91,7 +91,7 @@ join public.projects p on p.slug = g.slug
 join public.images  i on i.src = g.src;
 
 -- ——— Hero photo wall (columns + ordered images) ————————————————————————
-insert into public.hero_columns (id, duration, offset, display_order) values
+insert into public.hero_columns (id, duration, "offset", display_order) values
   ('left',   52,  -8, 0),
   ('center', 44, -20, 1),
   ('right',  60, -34, 2);

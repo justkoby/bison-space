@@ -140,7 +140,7 @@ as $$
       select jsonb_agg(jsonb_build_object(
                'id', c.id,
                'duration', c.duration,
-               'offset', c.offset,
+               'offset', c."offset",
                'images', coalesce((
                  select jsonb_agg(jsonb_build_object(
                           'src', i.src,
