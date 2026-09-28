@@ -10,6 +10,20 @@
     />
     <link rel="icon" type="image/svg+xml" href="/brand/favicon.svg" />
     <meta name="theme-color" content="#0b0a08" />
+    <script>
+      // Apply the stored theme before first paint (no flash of the wrong theme).
+      (function () {
+        try {
+          if (localStorage.getItem('bisons-theme') === 'light') {
+            var root = document.documentElement;
+            root.dataset.theme = 'light';
+            root.style.colorScheme = 'light';
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', '#f4ede2');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

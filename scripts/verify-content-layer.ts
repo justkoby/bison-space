@@ -69,12 +69,19 @@ console.log('\nnormalizeSettings — never invents values');
 const emptySettings = normalizeSettings(null);
 eq('absent settings → all empty strings', emptySettings, {
   instagramUrl: '', behanceUrl: '', whatsappUrl: '', whatsappCatalogUrl: '', mapsUrl: '',
+  studioLocation: '', contactEmail: '', contactPhone: '',
+  footerTagline: '', footerStudioNote: '', footerCopyright: '',
 });
 eq('absent mapsUrl stays empty (no guessed address)',
   normalizeSettings({ instagramUrl: 'https://x' }).mapsUrl, '');
 eq('provided mapsUrl is preserved',
   normalizeSettings({ mapsUrl: 'https://maps.google.com/?q=1' }).mapsUrl,
   'https://maps.google.com/?q=1');
+eq('provided footer/contact values are preserved',
+  normalizeSettings({ contactEmail: 'studio@bisons.space', footerTagline: 'Edited tagline.' }),
+  { ...emptySettings, contactEmail: 'studio@bisons.space', footerTagline: 'Edited tagline.' });
+eq('absent footer wording stays empty (Footer falls back to checked-in copy)',
+  normalizeSettings({}).footerCopyright, '');
 
 console.log('\nnormalizePublicContent — published-only + ordered + defensive');
 const payload: RawPublicContent = {

@@ -82,6 +82,12 @@ supabase db reset
    references it) and gates packages so they are public **only when both the
    package and its parent service are published**. Storage is intentionally
    unchanged — service photographs live in the same public `media` bucket.
+5. `20260928140000_site_settings_footer.sql` — adds the editable footer & contact
+   block to `site_settings` (`studio_location`, `contact_email`, `contact_phone`,
+   `footer_tagline`, `footer_studio_note`, `footer_copyright`), seeds the singleton
+   with today's checked-in footer wording (email/phone start empty and stay hidden
+   on the public site until supplied), and re-creates `get_public_content()` so the
+   `settings` object carries the six new keys.
 
 The seed re-inserts **every current photograph, project, slug, gallery order,
 hero column and site link** from the static modules, so image associations and
@@ -166,7 +172,11 @@ account.
   service is published** — unpublishing a service hides its packages too. Nothing is
   invented.
 - **Settings** — Instagram, Behance, WhatsApp + WhatsApp catalogue, and the Google
-  Maps URL. Each field must be blank or a valid `http(s)` URL. **Leave Maps blank**
+  Maps URL (each must be blank or a valid `http(s)` URL), plus the **Footer &
+  contact** block: studio address/location, contact email, phone, footer tagline,
+  studio note and copyright text. Email and phone render as working `mailto:` /
+  `tel:` links when provided; empty contact fields are hidden on the public site.
+  Emptied wording fields fall back to the checked-in copy. **Leave Maps blank**
   until a real studio address is confirmed; while blank the public site keeps its
   "location pending" state.
 

@@ -1,8 +1,23 @@
-import type { ReactNode } from 'react';
+import { useState } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { navigate, usePath } from '../router';
 import { AuthProvider, useAuth } from '../auth/AuthContext';
 import { AdminLink } from './AdminLink';
 import { Button, Loading, Notice } from './components/ui';
+import {
+  IconClose,
+  IconDashboard,
+  IconExternal,
+  IconHero,
+  IconLogout,
+  IconMenu,
+  IconPackages,
+  IconPortfolio,
+  IconServices,
+  IconSettings,
+  type IconProps,
+} from './components/icons';
+import Logo from '../components/Logo';
 import LoginPage from './LoginPage';
 import DashboardPage from './DashboardPage';
 import PortfolioListPage from './PortfolioListPage';
@@ -13,14 +28,25 @@ import PackagesPage from './PackagesPage';
 import SettingsPage from './SettingsPage';
 import './admin.css';
 
-const NAV = [
-  { to: '/admin', label: 'Dashboard', exact: true },
-  { to: '/admin/portfolio', label: 'Portfolio' },
-  { to: '/admin/hero', label: 'Hero wall' },
-  { to: '/admin/services', label: 'Services' },
-  { to: '/admin/packages', label: 'Packages' },
-  { to: '/admin/settings', label: 'Settings' },
+type NavItem = {
+  to: string;
+  label: string;
+  exact?: boolean;
+  Icon: ComponentType<IconProps>;
+};
+
+const NAV: NavItem[] = [
+  { to: '/admin', label: 'Dashboard', exact: true, Icon: IconDashboard },
+  { to: '/admin/portfolio', label: 'Portfolio', Icon: IconPortfolio },
+  { to: '/admin/hero', label: 'Hero', Icon: IconHero },
+  { to: '/admin/services', label: 'Services', Icon: IconServices },
+  { to: '/admin/packages', label: 'Packages', Icon: IconPackages },
+  { to: '/admin/settings', label: 'Settings', Icon: IconSettings },
 ];
+
+function isActive(item: NavItem, path: string): boolean {
+  return item.exact ? path === item.to : path.startsWith(item.to);
+}
 
 /** Resolve the admin sub-route from the full path (everything under /admin). */
 function renderRoute(path: string): ReactNode {
@@ -44,43 +70,133 @@ function renderRoute(path: string): ReactNode {
   );
 }
 
-/** The signed-in chrome: nav rail + the routed editor. */
+/** The signed-in chrome: rounded workspace, top bar, icon rail, routed editor. */
 function AdminShell() {
   const path = usePath();
   const { user, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="adm-shell">
-      <header className="adm-topbar">
-        <span className="adm-topbar__brand">Bison’s Space · Content</span>
-        <nav className="adm-nav" aria-label="Admin sections">
-          {NAV.map((item) => {
-            const active = item.exact ? path === item.to : path.startsWith(item.to);
-            return (
+      <div className="adm-workspace">
+        <header className="adm-topbar">
+          <AdminLink to="/admin" className="adm-topbar__brand" ariaLabel="Bison’s Space — admin dashboard">
+            <Logo className="adm-topbar__logo" />
+          </AdminLink>
+
+          <nav className="adm-topnav" aria-label="Admin sections">
+            {NAV.map((item) => (
               <AdminLink
                 key={item.to}
                 to={item.to}
-                className={active ? 'adm-nav__link adm-nav__link--active' : 'adm-nav__link'}
-                ariaLabel={item.label}
+                className={isActive(item, path) ? 'adm-topnav__link adm-topnav__link--active' : 'adm-topnav__link'}
               >
                 {item.label}
               </AdminLink>
-            );
-          })}
-        </nav>
-        <div className="adm-topbar__right">
-          <a className="adm-nav__link" href="/" target="_blank" rel="noreferrer">
-            View site ↗
-          </a>
-          <span className="adm-topbar__user" title={user?.email ?? ''}>
-            {user?.email ?? ''}
-          </span>
-          <Button variant="ghost" onClick={() => void signOut()}>
-            Sign out
-          </Button>
+            ))}
+          </nav>
+
+          <div className="adm-topbar__right">
+            <a className="adm-topbar__site" href="/" target="_blank" rel="noreferrer">
+              View site ↗
+            </a>
+            <span className="adm-topbar__user" title={user?.email ?? ''}>
+              {user?.email ?? ''}
+            </span>
+            <Button variant="ghost" onClick={() => void signOut()}>
+              Sign out
+            </Button>
+            <button
+              type="button"
+              className="adm-menubtn"
+              aria-expanded={menuOpen}
+              aria-label="Open admin menu"
+              onClick={() => setMenuOpen(true)}
+            >
+              <IconMenu />
+            </button>
+          </div>
+        </header>
+
+        {menuOpen ? (
+          <div className="adm-drawer__backdrop" role="presentation" onClick={closeMenu}>
+            <div
+              className="adm-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Admin menu"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="adm-drawer__head">
+                <Logo className="adm-drawer__logo" />
+                <button type="button" className="adm-menubtn" aria-label="Close admin menu" onClick={closeMenu}>
+                  <IconClose />
+                </button>
+              </div>
+              <nav className="adm-drawer__nav" aria-label="Admin sections">
+                {NAV.map((item) => (
+                  <AdminLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={closeMenu}
+                    className={isActive(item, path) ? 'adm-drawer__link adm-drawer__link--active' : 'adm-drawer__link'}
+                  >
+                    <item.Icon />
+                    <span>{item.label}</span>
+                  </AdminLink>
+                ))}
+              </nav>
+              <div className="adm-drawer__foot">
+                <a className="adm-drawer__link" href="/" target="_blank" rel="noreferrer">
+                  <IconExternal />
+                  <span>View site</span>
+                </a>
+                <button
+                  type="button"
+                  className="adm-drawer__link adm-drawer__link--button"
+                  onClick={() => {
+                    closeMenu();
+                    void signOut();
+                  }}
+                >
+                  <IconLogout />
+                  <span>Sign out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="adm-body">
+          <nav className="adm-rail" aria-label="Admin sections">
+            {NAV.map((item) => (
+              <AdminLink
+                key={item.to}
+                to={item.to}
+                title={item.label}
+                ariaLabel={item.label}
+                className={isActive(item, path) ? 'adm-rail__btn adm-rail__btn--active' : 'adm-rail__btn'}
+              >
+                <item.Icon />
+              </AdminLink>
+            ))}
+            <span className="adm-rail__sep" aria-hidden="true" />
+            <a
+              className="adm-rail__btn"
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              title="View site"
+              aria-label="View site (opens in a new tab)"
+            >
+              <IconExternal />
+            </a>
+          </nav>
+
+          <main className="adm-main">{renderRoute(path)}</main>
         </div>
-      </header>
-      <main className="adm-main">{renderRoute(path)}</main>
+      </div>
     </div>
   );
 }

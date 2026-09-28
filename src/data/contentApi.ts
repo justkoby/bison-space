@@ -124,6 +124,12 @@ export function toSettings(content: NormalizedContent): ResolvedSettings {
     whatsapp: content.settings.whatsappUrl,
     whatsappCatalog: content.settings.whatsappCatalogUrl,
     mapsUrl: content.settings.mapsUrl, // '' ⇒ support widget renders "Link pending"
+    studioLocation: content.settings.studioLocation,
+    contactEmail: content.settings.contactEmail,
+    contactPhone: content.settings.contactPhone,
+    footerTagline: content.settings.footerTagline,
+    footerStudioNote: content.settings.footerStudioNote,
+    footerCopyright: content.settings.footerCopyright,
   };
 }
 

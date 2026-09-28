@@ -11,21 +11,28 @@ export function AdminLink({
   className,
   children,
   ariaLabel,
+  title,
+  onClick,
 }: {
   to: string;
   className?: string;
   children: ReactNode;
   ariaLabel?: string;
+  /** Hover tooltip (used by the icon rail). */
+  title?: string;
+  /** Runs after a client-side navigation (used to close the mobile drawer). */
+  onClick?: () => void;
 }) {
-  const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
+  const onClickHandler = (event: MouseEvent<HTMLAnchorElement>) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
       return;
     }
     event.preventDefault();
     navigate(to);
+    onClick?.();
   };
   return (
-    <a className={className} href={to} aria-label={ariaLabel} onClick={onClick}>
+    <a className={className} href={to} aria-label={ariaLabel} title={title} onClick={onClickHandler}>
       {children}
     </a>
   );

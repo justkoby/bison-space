@@ -15,6 +15,8 @@ import {
   packages as staticPackageList,
   links,
   support,
+  brand,
+  footer,
 } from '../content/site';
 import type { HeroColumnId } from '../lib/types';
 
@@ -58,6 +60,12 @@ export type ResolvedSettings = {
   whatsapp: string;
   whatsappCatalog: string;
   mapsUrl: string;
+  studioLocation: string;
+  contactEmail: string;
+  contactPhone: string;
+  footerTagline: string;
+  footerStudioNote: string;
+  footerCopyright: string;
 };
 
 export interface StaticSiteContent {
@@ -119,6 +127,14 @@ export function buildStaticContent(): StaticSiteContent {
       whatsapp: links.whatsapp,
       whatsappCatalog: support.catalogUrl,
       mapsUrl: support.mapsUrl,
+      studioLocation: brand.location,
+      // No public contact email/phone exists in the checked-in content yet —
+      // the footer hides empty contact fields until the studio supplies them.
+      contactEmail: '',
+      contactPhone: '',
+      footerTagline: footer.tagline,
+      footerStudioNote: footer.studioNote,
+      footerCopyright: footer.copyright,
     },
   };
 }

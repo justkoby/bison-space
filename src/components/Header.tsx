@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Logo from './Logo';
+import ThemeToggle from './ThemeToggle';
 import { nav, links } from '../content/site';
 import { SiteLink } from '../router';
 
@@ -49,6 +50,7 @@ export default function Header({ variant = 'overlay' }: HeaderProps) {
                 {item.label}
               </SiteLink>
             ))}
+            <ThemeToggle className="header__theme" />
             <a
               className="btn btn--solid header__cta"
               href={links.whatsapp}
@@ -75,15 +77,18 @@ export default function Header({ variant = 'overlay' }: HeaderProps) {
       <div className={`menu${menuOpen ? ' menu--open' : ''}`} aria-hidden={!menuOpen}>
         <div className="menu__head">
           <Logo className="menu__logo" />
-          <button
-            type="button"
-            className="burger burger--ink burger--open"
-            aria-label="Close menu"
-            onClick={() => setMenuOpen(false)}
-          >
-            <span />
-            <span />
-          </button>
+          <div className="menu__head-actions">
+            <ThemeToggle className="menu__theme" />
+            <button
+              type="button"
+              className="burger burger--ink burger--open"
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+            >
+              <span />
+              <span />
+            </button>
+          </div>
         </div>
         <nav className="menu__nav" aria-label="Mobile">
           {nav.map((item) => (

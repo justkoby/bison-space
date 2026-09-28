@@ -75,6 +75,12 @@ interface PayloadSettings {
   whatsappUrl?: string;
   whatsappCatalogUrl?: string;
   mapsUrl?: string;
+  studioLocation?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  footerTagline?: string;
+  footerStudioNote?: string;
+  footerCopyright?: string;
 }
 export interface RawPublicContent {
   settings?: PayloadSettings | null;
@@ -90,6 +96,12 @@ export interface NormalizedSettings {
   whatsappUrl: string;
   whatsappCatalogUrl: string;
   mapsUrl: string;
+  studioLocation: string;
+  contactEmail: string;
+  contactPhone: string;
+  footerTagline: string;
+  footerStudioNote: string;
+  footerCopyright: string;
 }
 
 export interface NormalizedContent {
@@ -109,6 +121,14 @@ export function normalizeSettings(settings: PayloadSettings | null | undefined):
     whatsappCatalogUrl: settings?.whatsappCatalogUrl ?? '',
     // Never invent a Maps URL — an absent value stays empty (renders pending).
     mapsUrl: settings?.mapsUrl ?? '',
+    // Footer & contact block: absent values stay empty; the Footer component
+    // falls back to the checked-in wording and hides empty contact fields.
+    studioLocation: settings?.studioLocation ?? '',
+    contactEmail: settings?.contactEmail ?? '',
+    contactPhone: settings?.contactPhone ?? '',
+    footerTagline: settings?.footerTagline ?? '',
+    footerStudioNote: settings?.footerStudioNote ?? '',
+    footerCopyright: settings?.footerCopyright ?? '',
   };
 }
 

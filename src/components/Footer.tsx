@@ -10,12 +10,23 @@ export default function Footer() {
   const instagram = settings.instagram || links.instagram;
   const behance = settings.behance || links.behance;
   const whatsapp = settings.whatsapp || links.whatsapp;
+  // Footer wording: admin-managed value first, checked-in copy as the fallback
+  // so an emptied field restores today's wording instead of rendering blank.
+  const tagline = settings.footerTagline || footer.tagline;
+  const studioNote = settings.footerStudioNote || footer.studioNote;
+  const copyright = settings.footerCopyright || footer.copyright;
+  const location = settings.studioLocation || brand.location;
+  // Contact details are hidden until the studio supplies them — nothing invented.
+  const email = settings.contactEmail.trim();
+  const phone = settings.contactPhone.trim();
+  // tel: hrefs carry digits and a leading + only; the visible text keeps formatting.
+  const phoneHref = `tel:${phone.replace(/[^\d+]/g, '')}`;
   return (
     <footer className="footer" id="contact">
       <div className="footer__top">
         <div className="footer__brand">
           <Logo className="footer__logo" />
-          <p className="footer__tagline">{footer.tagline}</p>
+          <p className="footer__tagline">{tagline}</p>
         </div>
 
         <div className="footer__col">
@@ -42,13 +53,23 @@ export default function Footer() {
 
         <div className="footer__col">
           <h3 className="footer__heading">Studio</h3>
-          <p className="footer__line">{brand.location}</p>
-          <p className="footer__line">{footer.studioNote}</p>
+          {location ? <p className="footer__line">{location}</p> : null}
+          {email ? (
+            <a className="footer__link" href={`mailto:${email}`}>
+              {email}
+            </a>
+          ) : null}
+          {phone ? (
+            <a className="footer__link" href={phoneHref}>
+              {phone}
+            </a>
+          ) : null}
+          {studioNote ? <p className="footer__line">{studioNote}</p> : null}
         </div>
       </div>
 
       <div className="footer__bottom">
-        <p>{footer.copyright}</p>
+        <p>{copyright}</p>
       </div>
     </footer>
   );

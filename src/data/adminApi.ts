@@ -490,6 +490,12 @@ export type SettingsInput = {
   whatsappUrl: string;
   whatsappCatalogUrl: string;
   mapsUrl: string;
+  studioLocation: string;
+  contactEmail: string;
+  contactPhone: string;
+  footerTagline: string;
+  footerStudioNote: string;
+  footerCopyright: string;
 };
 
 export async function updateSettings(input: SettingsInput): Promise<SiteSettingsRow> {
@@ -501,6 +507,12 @@ export async function updateSettings(input: SettingsInput): Promise<SiteSettings
       whatsapp_url: input.whatsappUrl,
       whatsapp_catalog_url: input.whatsappCatalogUrl,
       maps_url: input.mapsUrl,
+      studio_location: input.studioLocation,
+      contact_email: input.contactEmail,
+      contact_phone: input.contactPhone,
+      footer_tagline: input.footerTagline,
+      footer_studio_note: input.footerStudioNote,
+      footer_copyright: input.footerCopyright,
     })
     .eq('id', 1)
     .select()

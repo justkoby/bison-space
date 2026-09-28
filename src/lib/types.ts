@@ -109,6 +109,12 @@ export interface SiteSettingsRow {
   whatsapp_url: string;
   whatsapp_catalog_url: string;
   maps_url: string;
+  studio_location: string;
+  contact_email: string;
+  contact_phone: string;
+  footer_tagline: string;
+  footer_studio_note: string;
+  footer_copyright: string;
   updated_at: string;
 }
 
@@ -127,6 +133,12 @@ export interface PublicContentPayload {
     whatsappUrl: string;
     whatsappCatalogUrl: string;
     mapsUrl: string;
+    studioLocation: string;
+    contactEmail: string;
+    contactPhone: string;
+    footerTagline: string;
+    footerStudioNote: string;
+    footerCopyright: string;
   };
   hero: {
     id: HeroColumnId;
