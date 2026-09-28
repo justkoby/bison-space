@@ -194,10 +194,20 @@ export default function ServicesPage() {
                 }
               />
             </Field>
-            <Field label="Slug" htmlFor="sv-slug" hint="Used for the packages tab and URLs.">
+            <Field
+              label="Slug"
+              htmlFor="sv-slug"
+              hint={
+                editingId === 'new'
+                  ? 'Used for the packages tab and URLs.'
+                  : 'Permanent — packages link to this slug, so it can’t be changed after creation.'
+              }
+            >
               <TextInput
                 id="sv-slug"
                 value={form.slug}
+                readOnly={editingId !== 'new'}
+                title={editingId === 'new' ? undefined : 'The slug is permanent once the service exists.'}
                 onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })}
                 placeholder="e.g. portraits"
               />

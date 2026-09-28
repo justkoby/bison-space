@@ -364,10 +364,11 @@ export async function createService(input: ServiceInput): Promise<ServiceRow> {
 }
 
 export async function updateService(id: string, input: ServiceInput): Promise<ServiceRow> {
+  // The slug is permanent (packages.category_slug references it and the DB
+  // rejects slug changes), so it is deliberately NOT part of the update payload.
   const { data, error } = await getSupabase()
     .from('services')
     .update({
-      slug: input.slug,
       name: input.name,
       short_description: input.shortDescription,
       image_id: input.imageId,
@@ -378,7 +379,6 @@ export async function updateService(id: string, input: ServiceInput): Promise<Se
     .select()
     .single<ServiceRow>();
   if (error) {
-    if (error.code === '23505') throw new Error('That slug is already in use. Choose another.');
     throw new Error(friendlyError(error, 'Could not update the service.'));
   }
   return data;

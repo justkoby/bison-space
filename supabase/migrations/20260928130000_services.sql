@@ -29,9 +29,18 @@
 --      every content row carries a timeline.
 --   3. RLS: the services select policy is re-created on `status` (the boolean is
 --      dropped); write policies stay allowlisted-admin-only (renamed for clarity).
+--      packages_select is re-created so a package is public ONLY when it is
+--      itself published AND its parent service is published (a draft service
+--      hides its packages), mirroring project_gallery_select's parent check.
 --   4. get_public_content() returns the key `services` (was `categories`) with
---      name / shortDescription / order fields. security invoker ⇒ RLS still
---      applies, so anon callers only ever receive published rows.
+--      name / shortDescription / order fields, and gates packages through a
+--      published service. security invoker ⇒ RLS still applies, so anon callers
+--      only ever receive published rows.
+--   5. services.slug is PERMANENT: packages.category_slug references it without
+--      ON UPDATE CASCADE, so the dashboard treats slug as create-only and a
+--      BEFORE UPDATE trigger rejects any slug change at the data layer. (The
+--      alternative — re-pointing packages at services.id — is a larger change
+--      across the app and seed; not needed while slugs are immutable.)
 --
 -- Dependency ordering: the old get_public_content() body and the
 -- service_categories_select policy both reference the columns we rename/drop
@@ -87,6 +96,27 @@ create trigger services_set_updated_at
   before update on public.services
   for each row execute function public.set_updated_at ();
 
+-- The slug is permanent. packages.category_slug references services.slug with
+-- ON DELETE CASCADE but no ON UPDATE CASCADE, so renaming a service that has
+-- packages would fail (or orphan rows). The dashboard makes slug create-only;
+-- this guard enforces the same rule for every client at the data layer.
+create or replace function public.services_guard_slug ()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.slug is distinct from old.slug then
+    raise exception 'A service slug is permanent because its packages reference it. Create a new service instead of renaming.'
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger services_slug_immutable
+  before update on public.services
+  for each row execute function public.services_guard_slug ();
+
 -- ——— 2. Timeline columns for gallery + hero slides ————————————————————
 alter table public.project_gallery add column created_at timestamptz not null default now();
 
@@ -106,6 +136,23 @@ create policy services_select on public.services
 alter policy service_categories_insert on public.services rename to services_insert;
 alter policy service_categories_update on public.services rename to services_update;
 alter policy service_categories_delete on public.services rename to services_delete;
+
+-- Packages are public only when the package is published AND its parent service
+-- is published, so unpublishing a service also hides its packages. Admins still
+-- read every package. The subquery is not self-referential (packages → services),
+-- so there is no policy recursion.
+drop policy if exists packages_select on public.packages;
+create policy packages_select on public.packages
+  for select to public using (
+    public.is_admin ()
+    or (
+      status = 'published'
+      and exists (
+        select 1 from public.services sv
+        where sv.slug = packages.category_slug and sv.status = 'published'
+      )
+    )
+  );
 
 -- ——— 4. Public read model (published-only, ordered) ———————————————————
 create or replace function public.get_public_content ()
@@ -169,7 +216,9 @@ as $$
              order by p.display_order)
       from public.packages p
       left join public.images i on i.id = p.image_id
-      where p.status = 'published'), '[]'::jsonb),
+      where p.status = 'published'
+        and exists (select 1 from public.services sv
+                    where sv.slug = p.category_slug and sv.status = 'published')), '[]'::jsonb),
 
     'projects', coalesce((
       select jsonb_agg(jsonb_build_object(

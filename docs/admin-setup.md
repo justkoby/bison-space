@@ -77,8 +77,11 @@ supabase db reset
    (replacing the boolean), `created_at` / `updated_at` + trigger and a
    status+order index; adds timeline columns to `project_gallery` and
    `hero_images`; and re-creates `get_public_content()` so it returns the key
-   `services` (was `categories`). Storage is intentionally unchanged — service
-   photographs live in the same public `media` bucket.
+   `services` (was `categories`). It also makes `services.slug` **permanent** (a
+   `BEFORE UPDATE` trigger rejects renames, because `packages.category_slug`
+   references it) and gates packages so they are public **only when both the
+   package and its parent service are published**. Storage is intentionally
+   unchanged — service photographs live in the same public `media` bucket.
 
 The seed re-inserts **every current photograph, project, slug, gallery order,
 hero column and site link** from the static modules, so image associations and
@@ -152,13 +155,16 @@ account.
   status. Delete asks for confirmation. Drafts never appear publicly.
 - **Hero wall** — order frames within each of the three drifting columns, edit alt
   text, hide/show a frame, add or remove frames, and preview the composed order.
-- **Services** — the “What We Shoot” session tiles: name, slug, photograph, short
-  description, display order (arrow reorder) and draft/published status. Only
-  published services render publicly. Deleting a service also removes any packages
-  filed under it (the slug foreign key cascades).
+- **Services** — the “What We Shoot” session tiles: name, a **permanent** slug
+  (set once at creation — it can’t be renamed later because packages link to it),
+  photograph, short description, display order (arrow reorder) and draft/published
+  status. Only published services render publicly. Deleting a service also removes
+  any packages filed under it (the slug foreign key cascades).
 - **Packages** — add confirmed packages under each service. **Incomplete packages
   stay draft**; price/specs are optional so you can save a work-in-progress without
-  publishing it. Nothing is invented.
+  publishing it. A package shows publicly **only when it is published and its parent
+  service is published** — unpublishing a service hides its packages too. Nothing is
+  invented.
 - **Settings** — Instagram, Behance, WhatsApp + WhatsApp catalogue, and the Google
   Maps URL. Each field must be blank or a valid `http(s)` URL. **Leave Maps blank**
   until a real studio address is confirmed; while blank the public site keeps its
@@ -185,11 +191,16 @@ npm run verify:supabase   # integration checks against your local stack (needs �
 - **Public reads** — as the `anon` role, `get_public_content()` returns only
   published projects/packages/services/hero frames, correctly ordered, and a direct
   table read of `projects` never returns a `draft` row. A `draft` service created
-  via the service role is invisible to `anon` until it is published.
-- **Unauthorized writes** — as `anon`, and as a signed-in **non-admin** user,
-  inserts/updates/deletes on `projects` and `services` and uploads to the `media`
-  bucket are **denied**. With an allowlisted admin (`BS_ADMIN_EMAIL` /
-  `BS_ADMIN_PASSWORD` set in `.env.local`), the same writes **succeed**.
+  via the service role is invisible to `anon` until it is published, and a
+  **published package under a draft service** stays invisible until the service is
+  published too.
+- **Unauthorized writes** — as `anon`, inserts into `projects` / `services` and
+  uploads to the `media` bucket are **denied outright**. Because RLS *hides* rows
+  (so PostgREST reports success with **zero affected rows** rather than an error),
+  blocked updates/deletes are proven against a **real row**: the script asserts 0
+  rows were affected **and** the row is unchanged / still present afterwards. With
+  an allowlisted admin (`BS_ADMIN_EMAIL` / `BS_ADMIN_PASSWORD` set in `.env.local`),
+  the same writes **succeed**.
 
 Only after all of these pass, and you have eyeballed the seeded content against
 the live site, set `VITE_CONTENT_SOURCE=supabase` and rebuild. If anything looks

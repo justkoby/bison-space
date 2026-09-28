@@ -8,8 +8,10 @@
  *   PUBLIC READS   — as `anon`, get_public_content() returns published content
  *                    only, correctly ordered; a draft row created via the
  *                    service role is invisible to anon until published.
- *   UNAUTHORIZED   — as `anon`, writes to content tables and uploads to the
- *   WRITES         — `media` bucket are DENIED by RLS / Storage policies.
+ *   UNAUTHORIZED   — as `anon`, inserts and `media` uploads are DENIED outright;
+ *   WRITES         — blocked updates/deletes are proven by targeting a REAL row
+ *                    and confirming 0 rows affected AND the row is UNCHANGED
+ *                    (RLS hides rows, so PostgREST reports success, not an error).
  *   AUTHORIZED     — with BS_ADMIN_EMAIL/BS_ADMIN_PASSWORD (an allowlisted
  *   WRITES         — account), the same writes SUCCEED. (Optional.)
  *
@@ -95,6 +97,7 @@ console.log('\nPublic reads (anon)');
 // Prove published-only using a draft created with the service role.
 let draftId = null;
 let draftServiceId = null;
+let draftPackageId = null;
 if (service) {
   const { data: img } = await service.from('images').select('id').limit(1).maybeSingle();
   const imageId = img?.id ?? null;
@@ -141,6 +144,27 @@ if (service) {
     draftServiceId = createdSvc.id;
     ok('service role can create a draft service');
 
+    // A PUBLISHED package under a DRAFT service must stay hidden (issue 2):
+    // the package is published in its own right, but its parent service is not.
+    const { data: createdPkg, error: pkgErr } = await service
+      .from('packages')
+      .insert({ category_slug: draftServiceSlug, name: 'Verify Package', description: '', display_order: 9999, status: 'published' })
+      .select()
+      .single();
+    if (pkgErr) {
+      bad('service role can create a package under the draft service', pkgErr.message);
+    } else {
+      draftPackageId = createdPkg.id;
+      ok('service role can create a package under the draft service');
+
+      const { data: rpcHidden } = await anon.rpc('get_public_content');
+      assert('published package under a DRAFT service is absent from the anon RPC payload',
+        !(rpcHidden?.packages ?? []).some((p) => p.id === draftPackageId));
+      const { data: pkgRows } = await anon.from('packages').select('id').eq('id', draftPackageId);
+      assert('packages_select hides a published package whose service is draft',
+        (pkgRows ?? []).length === 0);
+    }
+
     const { data: anonRpc } = await anon.rpc('get_public_content');
     assert('draft service is absent from the anon public payload',
       !(anonRpc?.services ?? []).some((s) => s.slug === draftServiceSlug));
@@ -149,6 +173,8 @@ if (service) {
     const { data: anonRpc2 } = await anon.rpc('get_public_content');
     assert('after publishing, anon sees the service',
       (anonRpc2?.services ?? []).some((s) => s.slug === draftServiceSlug));
+    assert('after publishing the service, anon sees its published package',
+      !draftPackageId || (anonRpc2?.packages ?? []).some((p) => p.id === draftPackageId));
   }
 } else {
   console.log('  SKIP  published-only service draft test (no SUPABASE_SERVICE_ROLE_KEY)');
@@ -160,11 +186,52 @@ console.log('\nUnauthorized writes (anon)');
   const { error } = await anon.from('projects').insert({ slug: `hack-${stamp}`, title: 'x', category: 'portraits', status: 'published', display_order: 0, cover_alt: '' });
   assert('anon cannot insert a project (RLS)', !!error, 'insert unexpectedly succeeded');
 
-  const { error: updErr } = await anon.from('site_settings').update({ instagram_url: 'https://evil.example' }).eq('id', 1);
-  assert('anon cannot update site_settings (RLS)', !!updErr, 'update unexpectedly succeeded');
+  // UPDATE: RLS hides the row, so PostgREST reports success with 0 affected
+  // rows rather than an error. Prove the row is UNCHANGED, not that it errored.
+  const before = await anon.from('site_settings').select('instagram_url').eq('id', 1).maybeSingle();
+  const { data: updRows, error: updErr } = await anon
+    .from('site_settings')
+    .update({ instagram_url: 'https://evil.example' })
+    .eq('id', 1)
+    .select('instagram_url');
+  const after = await anon.from('site_settings').select('instagram_url').eq('id', 1).maybeSingle();
+  assert(
+    'anon cannot update site_settings (0 rows affected, value unchanged)',
+    !updErr && (updRows ?? []).length === 0 && after.data?.instagram_url === before.data?.instagram_url,
+    `affected=${(updRows ?? []).length} err=${updErr?.message ?? 'none'}`,
+  );
 
-  const { error: delErr } = await anon.from('projects').delete().eq('slug', 'nonexistent-verify');
-  assert('anon cannot delete projects (RLS)', !!delErr, 'delete unexpectedly succeeded');
+  // DELETE: target a REAL row and confirm it survives. Prefer a throwaway row
+  // created via the service role; otherwise reuse an existing project. Either
+  // way the delete is blocked by RLS, so it is non-destructive.
+  let deleteTargetId = null;
+  let deleteTargetOwned = false;
+  if (service) {
+    const { data: tmp } = await service
+      .from('projects')
+      .insert({ slug: `verify-del-${stamp}`, title: 'Verify Delete Target', category: 'portraits', status: 'draft', display_order: 9996, cover_alt: '' })
+      .select('id')
+      .single();
+    if (tmp) { deleteTargetId = tmp.id; deleteTargetOwned = true; }
+  }
+  if (!deleteTargetId) {
+    const { data: existing } = await anon.from('projects').select('id').limit(1).maybeSingle();
+    deleteTargetId = existing?.id ?? null;
+  }
+  if (deleteTargetId) {
+    const { data: delRows, error: delErr } = await anon
+      .from('projects').delete().eq('id', deleteTargetId).select('id');
+    const survivorReader = service ?? anon;
+    const survivor = await survivorReader.from('projects').select('id').eq('id', deleteTargetId).maybeSingle();
+    assert(
+      'anon cannot delete an existing project (0 rows affected, row survives)',
+      !delErr && (delRows ?? []).length === 0 && !!survivor.data,
+      `affected=${(delRows ?? []).length} err=${delErr?.message ?? 'none'}`,
+    );
+    if (deleteTargetOwned) await service.from('projects').delete().eq('id', deleteTargetId);
+  } else {
+    console.log('  SKIP  unauthorized-delete test (no project row available)');
+  }
 
   const { error: svcInsErr } = await anon.from('services').insert({ slug: `hack-svc-${stamp}`, name: 'x', short_description: '', display_order: 0, status: 'published' });
   assert('anon cannot insert a service (RLS)', !!svcInsErr, 'insert unexpectedly succeeded');
@@ -216,6 +283,7 @@ if (ADMIN_EMAIL && ADMIN_PASSWORD) {
 
 // ——— Cleanup ——————————————————————————————————————————————
 if (service && draftId) await service.from('projects').delete().eq('id', draftId);
+if (service && draftPackageId) await service.from('packages').delete().eq('id', draftPackageId);
 if (service && draftServiceId) await service.from('services').delete().eq('id', draftServiceId);
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
