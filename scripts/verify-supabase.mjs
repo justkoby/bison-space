@@ -85,6 +85,16 @@ console.log('\nPublic reads (anon)');
       (data.projects ?? []).every((p) => Array.isArray(p.gallery) && p.gallery.length > 0));
     assert('settings.mapsUrl is a string (never null/invented)',
       typeof (data.settings?.mapsUrl ?? '') === 'string');
+    const FOOTER_KEYS = ['studioLocation', 'contactEmail', 'contactPhone', 'footerTagline', 'footerStudioNote', 'footerCopyright'];
+    assert('settings carries the migration-5 footer/contact keys as strings',
+      FOOTER_KEYS.every((k) => typeof (data.settings ?? {})[k] === 'string'),
+      FOOTER_KEYS.filter((k) => typeof (data.settings ?? {})[k] !== 'string').join(','));
+    assert('seeded footer tagline matches the checked-in wording',
+      String((data.settings ?? {}).footerTagline ?? '').includes('Portrait, beauty, fashion and editorial photography'),
+      String((data.settings ?? {}).footerTagline ?? ''));
+    assert('contact email/phone start empty (hidden on the public site)',
+      (data.settings ?? {}).contactEmail === '' && (data.settings ?? {}).contactPhone === '',
+      `${(data.settings ?? {}).contactEmail}/${(data.settings ?? {}).contactPhone}`);
     assert('services payload is an array', Array.isArray(data.services ?? []));
     const svcOrders = (data.services ?? []).map((s) => s.order ?? 0);
     assert('services are ordered ascending by display_order',

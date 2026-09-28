@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AdminLink } from './AdminLink';
 import { useAuth } from '../auth/AuthContext';
-import { getContentSource } from '../data/contentApi';
 import {
   listHeroImages,
   listImages,
@@ -33,7 +32,6 @@ function formatDate(iso: string): string {
  * comes from the content tables; nothing is invented.
  */
 export default function DashboardPage() {
-  const source = getContentSource();
   const { user } = useAuth();
   const [data, setData] = useState<DashData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -104,14 +102,6 @@ export default function DashboardPage() {
             <IconServices /> Edit services
           </AdminLink>
         </div>
-      </div>
-
-      <div className="adm-notice adm-notice--info">
-        Public content source:{' '}
-        <strong>{source === 'supabase' ? 'Supabase (live)' : 'static modules'}</strong>.
-        {source === 'static'
-          ? ' The site still renders the checked-in content until you verify the migration and set VITE_CONTENT_SOURCE=supabase.'
-          : ' The public site is reading published content from Supabase.'}
       </div>
 
       {error ? (

@@ -172,7 +172,7 @@
   white-space: nowrap;
 }
 
-/* Compact icon rail — tooltips via title, labels for screen readers. */
+/* Compact icon rail — flyout labels on hover/focus, aria-labels for readers. */
 .adm-rail {
   position: sticky;
   top: 96px;
@@ -189,6 +189,7 @@
 }
 
 .adm-rail__btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -197,6 +198,41 @@
   border-radius: 50%;
   color: var(--adm-muted);
   transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* Flyout label: clearer than a native title tooltip, keyboard-friendly. */
+.adm-rail__tip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 30;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--adm-text);
+  color: var(--adm-workspace);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.adm-rail__tip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  translate: 0 -50%;
+  border: 5px solid transparent;
+  border-right-color: var(--adm-text);
+}
+
+.adm-rail__btn:hover .adm-rail__tip,
+.adm-rail__btn:focus-visible .adm-rail__tip {
+  opacity: 1;
 }
 
 .adm-rail__btn:hover {

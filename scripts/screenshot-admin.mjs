@@ -258,9 +258,12 @@ try {
   await desktop.waitForSelector('.adm-ptable__row', { timeout: 10000 });
   const statCount = await desktop.locator('.adm-stat').count();
   assert('dashboard shows five summary stat cards', statCount === 5, `${statCount}`);
-  const railTitles = await desktop.locator('.adm-rail__btn').evaluateAll((els) => els.map((e) => e.getAttribute('title')));
-  assert('icon rail exposes tooltips for every section', railTitles.slice(0, 6).every(Boolean), railTitles.join(','));
+  const railTips = await desktop.locator('.adm-rail__btn .adm-rail__tip').allTextContents();
+  assert('icon rail exposes hover labels for every section', railTips.slice(0, 6).every(Boolean), railTips.join(','));
+  await desktop.hover('.adm-rail__btn:nth-child(2)');
+  await desktop.waitForTimeout(250);
   await desktop.screenshot({ path: `${OUT}/admin-dashboard-desktop.png` });
+  await desktop.mouse.move(10, 10);
   console.log('.preview/admin-dashboard-desktop.png');
 
   await shoot(desktop, '/admin/portfolio', '.adm-row', 'admin-portfolio-desktop');

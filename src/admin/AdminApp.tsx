@@ -174,11 +174,13 @@ function AdminShell() {
               <AdminLink
                 key={item.to}
                 to={item.to}
-                title={item.label}
                 ariaLabel={item.label}
                 className={isActive(item, path) ? 'adm-rail__btn adm-rail__btn--active' : 'adm-rail__btn'}
               >
                 <item.Icon />
+                <span className="adm-rail__tip" aria-hidden="true">
+                  {item.label}
+                </span>
               </AdminLink>
             ))}
             <span className="adm-rail__sep" aria-hidden="true" />
@@ -187,10 +189,12 @@ function AdminShell() {
               href="/"
               target="_blank"
               rel="noreferrer"
-              title="View site"
               aria-label="View site (opens in a new tab)"
             >
               <IconExternal />
+              <span className="adm-rail__tip" aria-hidden="true">
+                View site
+              </span>
             </a>
           </nav>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getSettings, updateSettings, type SettingsInput } from '../data/adminApi';
+import { getContentSource } from '../data/contentApi';
 import type { SiteSettingsRow } from '../lib/types';
 import { Button, ErrorState, Field, Loading, Notice, PageHeader, TextArea, TextInput } from './components/ui';
 
@@ -59,6 +60,7 @@ function badPhone(value: string): boolean {
 
 /** /admin/settings — social/contact URLs, WhatsApp catalogue, Google Maps link. */
 export default function SettingsPage() {
+  const source = getContentSource();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
@@ -133,6 +135,14 @@ export default function SettingsPage() {
 
       {saveError ? <Notice tone="error">{saveError}</Notice> : null}
       {saved ? <Notice tone="success">Site settings saved.</Notice> : null}
+
+      <div className="adm-notice adm-notice--info">
+        Public content source:{' '}
+        <strong>{source === 'supabase' ? 'Supabase (live)' : 'static modules'}</strong>.
+        {source === 'static'
+          ? ' The public site still renders the checked-in content; set VITE_CONTENT_SOURCE=supabase once the migration is verified.'
+          : ' The public site is reading published content from Supabase.'}
+      </div>
 
       <div className="adm-form">
         <section className="adm-section">
