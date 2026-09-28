@@ -90,6 +90,12 @@ const payload: RawPublicContent = {
     { id: 'p2', categorySlug: 'x', name: 'P2', description: '', duration: null, retouchedPhotos: null, outfits: null, price: null, order: 2, imageSrc: null, imageAlt: null, imageObjectPosition: null },
     { id: 'p1', categorySlug: 'x', name: 'P1', description: '', duration: null, retouchedPhotos: null, outfits: null, price: null, order: 1, imageSrc: null, imageAlt: null, imageObjectPosition: null },
   ],
+  services: [
+    { id: 's2', slug: 'events', name: 'Events', shortDescription: '', imageSrc: '/e.jpg', imageAlt: '', imageObjectPosition: null, order: 2 },
+    { id: 's1', slug: 'portraits', name: 'Portraits', shortDescription: '', imageSrc: '/p.jpg', imageAlt: '', imageObjectPosition: null, order: 1 },
+    // malformed: empty slug → dropped
+    { id: 's3', slug: '', name: 'Broken', shortDescription: '', imageSrc: null, imageAlt: null, imageObjectPosition: null, order: 0 },
+  ],
   hero: [{ id: 'left', duration: 50, offset: -8, images: undefined as never }],
 };
 const normalized = normalizePublicContent(payload);
@@ -97,8 +103,11 @@ eq('projects ordered by order', normalized.projects.map((p) => p.slug), ['a', 'b
 eq('malformed project dropped', normalized.projects.length, 3);
 eq('empty-src gallery frame dropped', normalized.projects[2].gallery.length, 1);
 eq('packages ordered by order', normalized.packages.map((p) => p.id), ['p1', 'p2']);
+eq('services ordered by order', normalized.services.map((s) => s.slug), ['portraits', 'events']);
+eq('malformed service (empty slug) dropped', normalized.services.length, 2);
 eq('hero column with missing images → empty array', normalized.hero[0].images.length, 0);
 eq('null payload is safe', normalizePublicContent(null).projects.length, 0);
+eq('null payload has no services', normalizePublicContent(null).services.length, 0);
 
 console.log('\nhasUsableContent — guards the fallback');
 check('true when projects exist', hasUsableContent(normalized));

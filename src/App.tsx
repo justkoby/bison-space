@@ -9,6 +9,7 @@ import ProjectPage from './pages/ProjectPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { usePath } from './router';
 import { getProjectBySlug } from './content/portfolio';
+import { SiteContentProvider } from './data/SiteContent';
 
 // The admin dashboard (and the Supabase client it pulls in) is code-split so it
 // never lands in the public bundle. It only loads when someone visits /admin.
@@ -73,7 +74,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <SiteContentProvider>
       {/* The branded opening sequence belongs to the homepage only */}
       {isHome && <SiteIntro />}
       <Header variant={isHome ? 'overlay' : 'solid'} />
@@ -85,6 +86,6 @@ export default function App() {
       </main>
       <Footer />
       <SupportWidget />
-    </>
+    </SiteContentProvider>
   );
 }

@@ -13,9 +13,14 @@ const CARDS = [
     body: 'Order the three drifting columns, add or replace frames, and preview the loop.',
   },
   {
+    to: '/admin/services',
+    title: 'Services',
+    body: 'Edit the “What We Shoot” session types: name, slug, photograph, order and draft/published status.',
+  },
+  {
     to: '/admin/packages',
-    title: 'Services & packages',
-    body: 'Edit the four session categories and their packages. Incomplete packages stay draft until published.',
+    title: 'Packages',
+    body: 'Add confirmed packages under each service. Incomplete packages stay draft until published.',
   },
   {
     to: '/admin/settings',

@@ -1,8 +1,15 @@
 import Logo from './Logo';
 import { nav, links, brand, footer } from '../content/site';
+import { useSiteContent } from '../data/SiteContent';
 import { SiteLink } from '../router';
 
 export default function Footer() {
+  const { settings } = useSiteContent();
+  // Prefer the admin-managed URL; fall back to the checked-in default so a blank
+  // setting never produces a broken link.
+  const instagram = settings.instagram || links.instagram;
+  const behance = settings.behance || links.behance;
+  const whatsapp = settings.whatsapp || links.whatsapp;
   return (
     <footer className="footer" id="contact">
       <div className="footer__top">
@@ -22,13 +29,13 @@ export default function Footer() {
 
         <div className="footer__col">
           <h3 className="footer__heading">Connect</h3>
-          <a className="footer__link" href={links.instagram} target="_blank" rel="noopener noreferrer">
+          <a className="footer__link" href={instagram} target="_blank" rel="noopener noreferrer">
             Instagram
           </a>
-          <a className="footer__link" href={links.behance} target="_blank" rel="noopener noreferrer">
+          <a className="footer__link" href={behance} target="_blank" rel="noopener noreferrer">
             Behance
           </a>
-          <a className="footer__link" href={links.whatsapp} target="_blank" rel="noopener noreferrer">
+          <a className="footer__link" href={whatsapp} target="_blank" rel="noopener noreferrer">
             WhatsApp
           </a>
         </div>

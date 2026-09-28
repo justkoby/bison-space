@@ -1,9 +1,9 @@
 # Admin setup guide — Bison's Space content dashboard
 
 A private `/admin` dashboard backed by **Supabase Auth + Postgres + Storage**. It
-lets authorized studio accounts edit the portfolio, hero wall, packages and site
-settings — while the **public site keeps rendering the checked-in static content
-until you explicitly verify and flip a flag.**
+lets authorized studio accounts edit the portfolio, hero wall, services, packages
+and site settings — while the **public site keeps rendering the checked-in static
+content until you explicitly verify and flip a flag.**
 
 Nothing here changes the live site on its own. The public bundle still imports
 `src/content/*.ts`; the Supabase client and the whole admin UI are code-split into
@@ -71,6 +71,14 @@ supabase db reset
 2. `20260928120100_rls.sql` — Row Level Security policies + the
    `get_public_content()` RPC (published-only, ordered).
 3. `20260928120200_storage.sql` — the `media` bucket + Storage policies.
+4. `20260928130000_services.sql` — **reuses** the existing tables (no duplicates):
+   renames `service_categories` → `services` and aligns it to a UUID primary key,
+   unique `slug`, `name` / `short_description`, a `draft|published` `status` enum
+   (replacing the boolean), `created_at` / `updated_at` + trigger and a
+   status+order index; adds timeline columns to `project_gallery` and
+   `hero_images`; and re-creates `get_public_content()` so it returns the key
+   `services` (was `categories`). Storage is intentionally unchanged — service
+   photographs live in the same public `media` bucket.
 
 The seed re-inserts **every current photograph, project, slug, gallery order,
 hero column and site link** from the static modules, so image associations and
@@ -144,7 +152,11 @@ account.
   status. Delete asks for confirmation. Drafts never appear publicly.
 - **Hero wall** — order frames within each of the three drifting columns, edit alt
   text, hide/show a frame, add or remove frames, and preview the composed order.
-- **Packages** — edit the four service categories' packages. **Incomplete packages
+- **Services** — the “What We Shoot” session tiles: name, slug, photograph, short
+  description, display order (arrow reorder) and draft/published status. Only
+  published services render publicly. Deleting a service also removes any packages
+  filed under it (the slug foreign key cascades).
+- **Packages** — add confirmed packages under each service. **Incomplete packages
   stay draft**; price/specs are optional so you can save a work-in-progress without
   publishing it. Nothing is invented.
 - **Settings** — Instagram, Behance, WhatsApp + WhatsApp catalogue, and the Google
@@ -171,12 +183,13 @@ npm run verify:supabase   # integration checks against your local stack (needs �
 `verify:supabase` exercises the two security-critical behaviours:
 
 - **Public reads** — as the `anon` role, `get_public_content()` returns only
-  published projects/packages/hero frames, correctly ordered, and a direct table
-  read of `projects` never returns a `draft` row.
+  published projects/packages/services/hero frames, correctly ordered, and a direct
+  table read of `projects` never returns a `draft` row. A `draft` service created
+  via the service role is invisible to `anon` until it is published.
 - **Unauthorized writes** — as `anon`, and as a signed-in **non-admin** user,
-  inserts/updates/deletes on `projects` and uploads to the `media` bucket are
-  **denied**. With an allowlisted admin (`BS_ADMIN_EMAIL` / `BS_ADMIN_PASSWORD`
-  set in `.env.local`), the same writes **succeed**.
+  inserts/updates/deletes on `projects` and `services` and uploads to the `media`
+  bucket are **denied**. With an allowlisted admin (`BS_ADMIN_EMAIL` /
+  `BS_ADMIN_PASSWORD` set in `.env.local`), the same writes **succeed**.
 
 Only after all of these pass, and you have eyeballed the seeded content against
 the live site, set `VITE_CONTENT_SOURCE=supabase` and rebuild. If anything looks

@@ -1,10 +1,11 @@
 import type { CSSProperties } from 'react';
-import { shootCategories, shootSection } from '../content/site';
-import { images } from '../content/images';
+import { shootSection } from '../content/site';
+import { useSiteContent } from '../data/SiteContent';
 import { SELECT_CATEGORY_EVENT } from './Packages';
 import { SiteLink } from '../router';
 
 export default function WhatWeShoot() {
+  const { services } = useSiteContent();
   const seePackages = (slug: string) => () => {
     window.dispatchEvent(new CustomEvent(SELECT_CATEGORY_EVENT, { detail: slug }));
   };
@@ -22,27 +23,24 @@ export default function WhatWeShoot() {
       </div>
 
       <div className="shoot__grid">
-        {shootCategories.map((category) => {
-          const asset = images[category.imageId];
-          return (
-            <article className="shoot__tile" key={category.slug}>
-              <figure className="shoot__frame">
-                <img
-                  src={asset.src}
-                  alt={asset.alt}
-                  loading="lazy"
-                  decoding="async"
-                  style={{ '--op': asset.objectPosition } as CSSProperties}
-                />
-              </figure>
-              <h3 className="shoot__title">{category.title}</h3>
-              <p className="shoot__blurb">{category.blurb}</p>
-              <a className="shoot__action" href="#packages" onClick={seePackages(category.slug)}>
-                {shootSection.cardAction} <span aria-hidden="true">→</span>
-              </a>
-            </article>
-          );
-        })}
+        {services.map((service) => (
+          <article className="shoot__tile" key={service.slug}>
+            <figure className="shoot__frame">
+              <img
+                src={service.src}
+                alt={service.alt}
+                loading="lazy"
+                decoding="async"
+                style={{ '--op': service.objectPosition } as CSSProperties}
+              />
+            </figure>
+            <h3 className="shoot__title">{service.title}</h3>
+            <p className="shoot__blurb">{service.blurb}</p>
+            <a className="shoot__action" href="#packages" onClick={seePackages(service.slug)}>
+              {shootSection.cardAction} <span aria-hidden="true">→</span>
+            </a>
+          </article>
+        ))}
       </div>
     </section>
   );

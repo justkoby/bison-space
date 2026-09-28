@@ -8,6 +8,7 @@ import DashboardPage from './DashboardPage';
 import PortfolioListPage from './PortfolioListPage';
 import ProjectEditorPage from './ProjectEditorPage';
 import HeroManagerPage from './HeroManagerPage';
+import ServicesPage from './ServicesPage';
 import PackagesPage from './PackagesPage';
 import SettingsPage from './SettingsPage';
 import './admin.css';
@@ -16,6 +17,7 @@ const NAV = [
   { to: '/admin', label: 'Dashboard', exact: true },
   { to: '/admin/portfolio', label: 'Portfolio' },
   { to: '/admin/hero', label: 'Hero wall' },
+  { to: '/admin/services', label: 'Services' },
   { to: '/admin/packages', label: 'Packages' },
   { to: '/admin/settings', label: 'Settings' },
 ];
@@ -28,6 +30,7 @@ function renderRoute(path: string): ReactNode {
   const edit = path.match(/^\/admin\/portfolio\/([^/]+)$/);
   if (edit) return <ProjectEditorPage projectId={decodeURIComponent(edit[1])} />;
   if (path === '/admin/hero') return <HeroManagerPage />;
+  if (path === '/admin/services') return <ServicesPage />;
   if (path === '/admin/packages') return <PackagesPage />;
   if (path === '/admin/settings') return <SettingsPage />;
   return (

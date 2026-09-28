@@ -1,20 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { SiteLink } from '../router';
 import {
   categoryLabels,
-  getPublishedProjects,
   portfolioCta,
   portfolioIntro,
 } from '../content/portfolio';
 import type { PortfolioCategory } from '../content/portfolio';
 import { links } from '../content/site';
+import { useSiteContent } from '../data/SiteContent';
 
 type Filter = PortfolioCategory | 'all';
 
 /** Standalone portfolio index: filterable grid of shoot/project tiles. */
 export default function PortfolioPage() {
-  const projects = useMemo(() => getPublishedProjects(), []);
+  const { projects } = useSiteContent();
   const [filter, setFilter] = useState<Filter>('all');
 
   // Only offer categories the published projects genuinely cover.
@@ -56,27 +56,33 @@ export default function PortfolioPage() {
         </div>
 
         <div className="portfolio__grid" key={filter}>
-          {visible.map((project, index) => (
-            <SiteLink
-              href={`/portfolio/${project.slug}`}
-              className="portfolio__tile"
-              key={project.slug}
-            >
-              <figure className="portfolio__frame">
-                <img
-                  src={project.cover.src}
-                  alt={project.cover.alt}
-                  loading={index < 3 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  style={{ '--op': project.cover.thumbPosition ?? '50% 30%' } as CSSProperties}
-                />
-              </figure>
-              <div className="portfolio__meta">
-                <p className="portfolio__category">{categoryLabels[project.category]}</p>
-                <h2 className="portfolio__title">{project.title}</h2>
-              </div>
-            </SiteLink>
-          ))}
+          {visible.length === 0 ? (
+            <p className="portfolio__empty">
+              No published projects in this view yet — please check back soon.
+            </p>
+          ) : (
+            visible.map((project, index) => (
+              <SiteLink
+                href={`/portfolio/${project.slug}`}
+                className="portfolio__tile"
+                key={project.slug}
+              >
+                <figure className="portfolio__frame">
+                  <img
+                    src={project.cover.src}
+                    alt={project.cover.alt}
+                    loading={index < 3 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    style={{ '--op': project.cover.thumbPosition ?? '50% 30%' } as CSSProperties}
+                  />
+                </figure>
+                <div className="portfolio__meta">
+                  <p className="portfolio__category">{categoryLabels[project.category]}</p>
+                  <h2 className="portfolio__title">{project.title}</h2>
+                </div>
+              </SiteLink>
+            ))
+          )}
         </div>
       </section>
 

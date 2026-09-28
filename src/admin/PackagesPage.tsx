@@ -5,11 +5,11 @@ import {
   deletePackage,
   listImages,
   listPackages,
-  listServiceCategories,
+  listServices,
   updatePackage,
   type PackageInput,
 } from '../data/adminApi';
-import type { ImageRow, PackageRow, PublishStatus, ServiceCategoryRow } from '../lib/types';
+import type { ImageRow, PackageRow, PublishStatus, ServiceRow } from '../lib/types';
 import { ImagePicker } from './components/ImagePicker';
 import {
   Button,
@@ -27,14 +27,14 @@ import {
 } from './components/ui';
 
 type Loaded = {
-  categories: ServiceCategoryRow[];
+  categories: ServiceRow[];
   packages: PackageRow[];
   images: Record<string, ImageRow>;
 };
 
 async function loadAll(): Promise<Loaded> {
   const [categories, packages, imageList] = await Promise.all([
-    listServiceCategories(),
+    listServices(),
     listPackages(),
     listImages(),
   ]);
@@ -181,7 +181,7 @@ export default function PackagesPage() {
               <Select id="pk-cat" value={form.categorySlug} onChange={(e) => setForm({ ...form, categorySlug: e.target.value })}>
                 {categories.map((category) => (
                   <option key={category.slug} value={category.slug}>
-                    {category.title}
+                    {category.name}
                   </option>
                 ))}
               </Select>
@@ -242,7 +242,7 @@ export default function PackagesPage() {
         <div className="adm-groups">
           {grouped.map(({ category, items }) => (
             <section className="adm-group" key={category.slug}>
-              <h2 className="adm-group__title">{category.title}</h2>
+              <h2 className="adm-group__title">{category.name}</h2>
               {items.length === 0 ? (
                 <p className="adm-group__empty">No packages in this category.</p>
               ) : (

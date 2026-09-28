@@ -45,13 +45,15 @@ interface PayloadHeroColumn {
   offset: number;
   images: { src: string; alt: string; objectPosition?: string; objectPositionMobile?: string | null }[];
 }
-interface PayloadCategory {
+interface PayloadService {
+  id: string;
   slug: string;
-  title: string;
-  blurb: string;
+  name: string;
+  shortDescription: string;
   imageSrc: string | null;
   imageAlt: string | null;
   imageObjectPosition: string | null;
+  order: number;
 }
 interface PayloadPackage {
   id: string;
@@ -77,7 +79,7 @@ interface PayloadSettings {
 export interface RawPublicContent {
   settings?: PayloadSettings | null;
   hero?: PayloadHeroColumn[] | null;
-  categories?: PayloadCategory[] | null;
+  services?: PayloadService[] | null;
   packages?: PayloadPackage[] | null;
   projects?: PayloadProject[] | null;
 }
@@ -93,7 +95,7 @@ export interface NormalizedSettings {
 export interface NormalizedContent {
   settings: NormalizedSettings;
   hero: PayloadHeroColumn[];
-  categories: PayloadCategory[];
+  services: PayloadService[];
   packages: PayloadPackage[];
   projects: PayloadProject[];
 }
@@ -128,12 +130,19 @@ export function normalizePublicContent(payload: RawPublicContent | null | undefi
   }));
 
   const packages = sortOrdered(payload?.packages ?? [], (p) => Number(p.order ?? 0));
+  const services = sortOrdered(
+    (payload?.services ?? []).filter(
+      (s): s is PayloadService =>
+        !!s && typeof s.slug === 'string' && s.slug.length > 0 && typeof s.name === 'string',
+    ),
+    (s) => Number(s.order ?? 0),
+  );
   const hero = (payload?.hero ?? []).map((column) => ({ ...column, images: column.images ?? [] }));
 
   return {
     settings: normalizeSettings(payload?.settings),
     hero,
-    categories: payload?.categories ?? [],
+    services,
     packages,
     projects,
   };

@@ -1,26 +1,29 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { packages, packagesSection, shootCategories, whatsappEnquiry } from '../content/site';
-import type { Package } from '../content/site';
-import { images } from '../content/images';
+import { packagesSection, whatsappEnquiry } from '../content/site';
+import { useSiteContent } from '../data/SiteContent';
+import type { ResolvedPackage, ResolvedService } from '../data/staticContent';
 
 /** Fired by the "What We Shoot" cards so the matching tab opens. */
 export const SELECT_CATEGORY_EVENT = 'bs:select-category';
 
 export default function Packages() {
-  const [active, setActive] = useState(shootCategories[0].slug);
+  const { services, packages } = useSiteContent();
+  const [active, setActive] = useState(services[0]?.slug ?? '');
 
   useEffect(() => {
     const onSelect = (event: Event) => {
       const slug = (event as CustomEvent<string>).detail;
-      if (shootCategories.some((category) => category.slug === slug)) setActive(slug);
+      if (services.some((service) => service.slug === slug)) setActive(slug);
     };
     window.addEventListener(SELECT_CATEGORY_EVENT, onSelect);
     return () => window.removeEventListener(SELECT_CATEGORY_EVENT, onSelect);
-  }, []);
+  }, [services]);
 
-  const category = shootCategories.find((item) => item.slug === active) ?? shootCategories[0];
-  const confirmed = packages.filter((pkg) => pkg.confirmed && pkg.categorySlug === category.slug);
+  const category = services.find((item) => item.slug === active) ?? services[0];
+  const confirmed = category
+    ? packages.filter((pkg) => pkg.categorySlug === category.slug)
+    : [];
 
   return (
     <section className="packages" id="packages">
@@ -28,15 +31,15 @@ export default function Packages() {
       <h2 className="section-title section-title--ink">{packagesSection.headline}</h2>
 
       <div className="packages__tabs" role="tablist" aria-label="Session categories">
-        {shootCategories.map((item) => (
+        {services.map((item) => (
           <button
             key={item.slug}
             type="button"
             role="tab"
             id={`tab-${item.slug}`}
-            aria-selected={item.slug === active}
+            aria-selected={item.slug === category?.slug}
             aria-controls={`panel-${item.slug}`}
-            className={`packages__tab${item.slug === active ? ' is-active' : ''}`}
+            className={`packages__tab${item.slug === category?.slug ? ' is-active' : ''}`}
             onClick={() => setActive(item.slug)}
           >
             {item.title}
@@ -44,26 +47,33 @@ export default function Packages() {
         ))}
       </div>
 
-      <div
-        className="packages__panel"
-        role="tabpanel"
-        id={`panel-${category.slug}`}
-        aria-labelledby={`tab-${category.slug}`}
-      >
-        <div className={`packages__grid${confirmed.length > 0 ? '' : ' packages__grid--single'}`}>
-          {confirmed.length > 0
-            ? confirmed.map((pkg) => <PackageCard key={pkg.id} pkg={pkg} categoryTitle={category.title} />)
-            : <CustomCard categoryTitle={category.title} imageId={category.imageId} />}
+      {category ? (
+        <div
+          className="packages__panel"
+          role="tabpanel"
+          id={`panel-${category.slug}`}
+          aria-labelledby={`tab-${category.slug}`}
+        >
+          <div className={`packages__grid${confirmed.length > 0 ? '' : ' packages__grid--single'}`}>
+            {confirmed.length > 0
+              ? confirmed.map((pkg) => (
+                  <PackageCard key={pkg.id} pkg={pkg} categoryTitle={category.title} />
+                ))
+              : <CustomCard categoryTitle={category.title} service={category} />}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="packages__panel">
+          <p className="packages__note">{packagesSection.custom.description}</p>
+        </div>
+      )}
 
       <p className="packages__note">{packagesSection.note}</p>
     </section>
   );
 }
 
-function PackageCard({ pkg, categoryTitle }: { pkg: Package; categoryTitle: string }) {
-  const asset = images[pkg.imageId];
+function PackageCard({ pkg, categoryTitle }: { pkg: ResolvedPackage; categoryTitle: string }) {
   const specs = [
     pkg.duration && { label: 'Duration', value: pkg.duration },
     pkg.retouchedPhotos && { label: 'Retouched', value: pkg.retouchedPhotos },
@@ -72,15 +82,17 @@ function PackageCard({ pkg, categoryTitle }: { pkg: Package; categoryTitle: stri
 
   return (
     <article className="package">
-      <figure className="package__frame">
-        <img
-          src={asset.src}
-          alt={asset.alt}
-          loading="lazy"
-          decoding="async"
-          style={{ '--op': asset.objectPosition } as CSSProperties}
-        />
-      </figure>
+      {pkg.src ? (
+        <figure className="package__frame">
+          <img
+            src={pkg.src}
+            alt={pkg.alt ?? ''}
+            loading="lazy"
+            decoding="async"
+            style={{ '--op': pkg.objectPosition } as CSSProperties}
+          />
+        </figure>
+      ) : null}
       <div className="package__body">
         <p className="package__category">{categoryTitle}</p>
         <h3 className="package__name">{pkg.name}</h3>
@@ -109,17 +121,16 @@ function PackageCard({ pkg, categoryTitle }: { pkg: Package; categoryTitle: stri
 }
 
 /** Polished placeholder shown until real packages are confirmed for a category. */
-function CustomCard({ categoryTitle, imageId }: { categoryTitle: string; imageId: string }) {
-  const asset = images[imageId];
+function CustomCard({ categoryTitle, service }: { categoryTitle: string; service: ResolvedService }) {
   return (
     <article className="package package--wide">
       <figure className="package__frame">
         <img
-          src={asset.src}
-          alt={asset.alt}
+          src={service.src}
+          alt={service.alt}
           loading="lazy"
           decoding="async"
-          style={{ '--op': asset.objectPosition } as CSSProperties}
+          style={{ '--op': service.objectPosition } as CSSProperties}
         />
       </figure>
       <div className="package__body">

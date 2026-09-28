@@ -108,15 +108,15 @@ from (values
 ) as h(column_id, src, position)
 join public.images i on i.src = h.src;
 
--- ——— Service categories ("What We Shoot") ————————————————————————————————
-insert into public.service_categories (slug, title, blurb, image_id, display_order, published)
-select c.slug, c.title, c.blurb, i.id, c.display_order, true
+-- ——— Services ("What We Shoot") — same copy + order as the site ——————————
+insert into public.services (slug, name, short_description, image_id, display_order, status)
+select c.slug, c.name, c.short_description, i.id, c.display_order, 'published'
 from (values
   ('portraits',       'Portraits',        'Studio and location portrait sittings built on presence, not poses.', '/images/work/work-portrait-white-blazer.jpg', 0),
   ('beauty-fashion',  'Beauty & Fashion', 'Makeup, styling and light, composed for campaign and editorial use.',  '/images/work/work-fashion-red-gown.jpg',      1),
   ('events',          'Events',           'Graduations, celebrations and milestones, covered with care.',          '/images/work/work-events-graduation.jpg',     2),
   ('brand-stories',   'Brand Stories',    'Lookbooks and product narratives for brands with something to say.',    '/images/work/work-brand-street-style.jpg',    3)
-) as c(slug, title, blurb, src, display_order)
+) as c(slug, name, short_description, src, display_order)
 join public.images i on i.src = c.src;
 
 -- ——— Packages: intentionally none seeded (nothing invented) ————————————————

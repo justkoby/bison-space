@@ -50,6 +50,7 @@ export interface GalleryRow {
   image_id: string;
   alt: string;
   position: number;
+  created_at: string;
 }
 
 export interface HeroColumnRow {
@@ -68,15 +69,21 @@ export interface HeroImageRow {
   object_position_mobile: string | null;
   position: number;
   published: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ServiceCategoryRow {
+/** services table (was service_categories) — the "What We Shoot" sessions. */
+export interface ServiceRow {
+  id: string;
   slug: string;
-  title: string;
-  blurb: string;
+  name: string;
+  short_description: string;
   image_id: string | null;
   display_order: number;
-  published: boolean;
+  status: PublishStatus;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PackageRow {
@@ -127,13 +134,15 @@ export interface PublicContentPayload {
     offset: number;
     images: PublicContentImage[];
   }[];
-  categories: {
+  services: {
+    id: string;
     slug: string;
-    title: string;
-    blurb: string;
+    name: string;
+    shortDescription: string;
     imageSrc: string | null;
     imageAlt: string | null;
     imageObjectPosition: string | null;
+    order: number;
   }[];
   packages: {
     id: string;

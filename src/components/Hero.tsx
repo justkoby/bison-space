@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
-import { heroWall, images } from '../content/images';
 import { hero } from '../content/site';
+import { useSiteContent } from '../data/SiteContent';
 import Logo from './Logo';
 
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
+  const { hero: heroWall } = useSiteContent();
 
   // Pause the drift while the tab is hidden (saves CPU/GPU; resumes on return).
   useEffect(() => {
@@ -36,25 +37,24 @@ export default function Hero() {
                 }
               >
                 {sets.map((setIndex) =>
-                  column.imageIds.map((imageId) => {
-                    const asset = images[imageId];
+                  column.images.map((image, imageIndex) => {
                     const duplicate = setIndex === 1;
                     return (
                       <figure
                         className="wall-cell"
-                        key={`${setIndex}-${imageId}`}
+                        key={`${setIndex}-${imageIndex}-${image.src}`}
                         aria-hidden={duplicate ? 'true' : undefined}
                       >
                         <img
-                          src={asset.src}
-                          alt={duplicate ? '' : asset.alt}
+                          src={image.src}
+                          alt={duplicate ? '' : image.alt}
                           loading="eager"
                           decoding="async"
                           draggable={false}
                           style={
                             {
-                              '--op': asset.objectPosition,
-                              '--opm': asset.objectPositionMobile ?? asset.objectPosition,
+                              '--op': image.objectPosition,
+                              '--opm': image.objectPositionMobile ?? image.objectPosition,
                             } as CSSProperties
                           }
                         />

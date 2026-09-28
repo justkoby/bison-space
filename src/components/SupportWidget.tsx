@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { support, supportActions } from '../content/site';
+import { links, support, supportActions } from '../content/site';
+import { useSiteContent } from '../data/SiteContent';
 
 /**
  * Floating support button + compact dialog panel.
@@ -12,6 +13,23 @@ export default function SupportWidget() {
   const fabRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const hadOpen = useRef(false);
+  const { settings } = useSiteContent();
+
+  // Prefer the admin-managed URL for each action; fall back to the checked-in
+  // default. An absent Maps URL stays empty so the action renders "Link pending".
+  const hrefFor = (id: string, fallback: string): string => {
+    switch (id) {
+      case 'book':
+      case 'ask':
+        return settings.whatsapp || links.whatsapp;
+      case 'packages':
+        return settings.whatsappCatalog || support.catalogUrl;
+      case 'studio':
+        return settings.mapsUrl || support.mapsUrl;
+      default:
+        return fallback;
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -111,12 +129,13 @@ export default function SupportWidget() {
           </div>
 
           <div className="support__actions">
-            {supportActions.map((action) =>
-              action.href ? (
+            {supportActions.map((action) => {
+              const href = hrefFor(action.id, action.href);
+              return href ? (
                 <a
                   key={action.id}
                   className="support__action"
-                  href={action.href}
+                  href={href}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -133,8 +152,8 @@ export default function SupportWidget() {
                   <span>{action.label}</span>
                   <span className="support__hint">{support.pendingHint}</span>
                 </button>
-              ),
-            )}
+              );
+            })}
           </div>
 
           <p className="support__note">{support.note}</p>

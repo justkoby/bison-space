@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { SiteLink } from '../router';
 import Lightbox from '../components/Lightbox';
-import {
-  categoryLabels,
-  getPublishedProjects,
-  getProjectBySlug,
-  projectEnquiry,
-} from '../content/portfolio';
+import { categoryLabels, projectEnquiry } from '../content/portfolio';
+import { useSiteContent } from '../data/SiteContent';
 
 /** Single project view: lead image, full-composition sequence, enquiry action. */
 export default function ProjectPage({ slug }: { slug: string }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const project = getProjectBySlug(slug);
+  const { projects } = useSiteContent();
+  const project = projects.find((entry) => entry.slug === slug);
 
   if (!project) {
     return (
@@ -28,7 +25,6 @@ export default function ProjectPage({ slug }: { slug: string }) {
     );
   }
 
-  const projects = getPublishedProjects();
   const position = projects.findIndex((entry) => entry.slug === project.slug);
   const previous = projects[(position - 1 + projects.length) % projects.length];
   const next = projects[(position + 1) % projects.length];

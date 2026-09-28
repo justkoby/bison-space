@@ -83,11 +83,18 @@ console.log('\nPublic reads (anon)');
       (data.projects ?? []).every((p) => Array.isArray(p.gallery) && p.gallery.length > 0));
     assert('settings.mapsUrl is a string (never null/invented)',
       typeof (data.settings?.mapsUrl ?? '') === 'string');
+    assert('services payload is an array', Array.isArray(data.services ?? []));
+    const svcOrders = (data.services ?? []).map((s) => s.order ?? 0);
+    assert('services are ordered ascending by display_order',
+      svcOrders.every((v, i) => i === 0 || svcOrders[i - 1] <= v), JSON.stringify(svcOrders));
+    assert('every published service has a slug and name',
+      (data.services ?? []).every((s) => typeof s.slug === 'string' && s.slug.length > 0 && typeof s.name === 'string'));
   }
 }
 
 // Prove published-only using a draft created with the service role.
 let draftId = null;
+let draftServiceId = null;
 if (service) {
   const { data: img } = await service.from('images').select('id').limit(1).maybeSingle();
   const imageId = img?.id ?? null;
@@ -120,6 +127,33 @@ if (service) {
   console.log('  SKIP  published-only draft test (no SUPABASE_SERVICE_ROLE_KEY)');
 }
 
+// Prove published-only for SERVICES the same way.
+if (service) {
+  const draftServiceSlug = `verify-svc-${stamp}`;
+  const { data: createdSvc, error: svcErr } = await service
+    .from('services')
+    .insert({ slug: draftServiceSlug, name: 'Verify Service', short_description: '', display_order: 9999, status: 'draft' })
+    .select()
+    .single();
+  if (svcErr) {
+    bad('service role can create a draft service', svcErr.message);
+  } else {
+    draftServiceId = createdSvc.id;
+    ok('service role can create a draft service');
+
+    const { data: anonRpc } = await anon.rpc('get_public_content');
+    assert('draft service is absent from the anon public payload',
+      !(anonRpc?.services ?? []).some((s) => s.slug === draftServiceSlug));
+
+    await service.from('services').update({ status: 'published' }).eq('id', draftServiceId);
+    const { data: anonRpc2 } = await anon.rpc('get_public_content');
+    assert('after publishing, anon sees the service',
+      (anonRpc2?.services ?? []).some((s) => s.slug === draftServiceSlug));
+  }
+} else {
+  console.log('  SKIP  published-only service draft test (no SUPABASE_SERVICE_ROLE_KEY)');
+}
+
 // ——— 2. UNAUTHORIZED WRITES: anon is denied ————————————————
 console.log('\nUnauthorized writes (anon)');
 {
@@ -131,6 +165,9 @@ console.log('\nUnauthorized writes (anon)');
 
   const { error: delErr } = await anon.from('projects').delete().eq('slug', 'nonexistent-verify');
   assert('anon cannot delete projects (RLS)', !!delErr, 'delete unexpectedly succeeded');
+
+  const { error: svcInsErr } = await anon.from('services').insert({ slug: `hack-svc-${stamp}`, name: 'x', short_description: '', display_order: 0, status: 'published' });
+  assert('anon cannot insert a service (RLS)', !!svcInsErr, 'insert unexpectedly succeeded');
 
   const blob = new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type: 'image/jpeg' });
   const { error: upErr } = await anon.storage.from('media').upload(`verify/anon-${stamp}.jpg`, blob, { contentType: 'image/jpeg' });
@@ -157,6 +194,15 @@ if (ADMIN_EMAIL && ADMIN_PASSWORD) {
       .single();
     assert('admin can insert a project', !insErr, insErr?.message);
 
+    const svcSlug = `verify-admin-svc-${stamp}`;
+    const { data: svc, error: svcInsErr } = await admin
+      .from('services')
+      .insert({ slug: svcSlug, name: 'Verify Admin Service', short_description: '', display_order: 9997, status: 'draft' })
+      .select()
+      .single();
+    assert('admin can insert a service', !svcInsErr, svcInsErr?.message);
+    if (svc) await admin.from('services').delete().eq('id', svc.id);
+
     const blob = new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type: 'image/jpeg' });
     const { error: upErr } = await admin.storage.from('media').upload(`verify/admin-${stamp}.jpg`, blob, { contentType: 'image/jpeg' });
     assert('admin can upload to the media bucket', !upErr, upErr?.message);
@@ -170,6 +216,7 @@ if (ADMIN_EMAIL && ADMIN_PASSWORD) {
 
 // ——— Cleanup ——————————————————————————————————————————————
 if (service && draftId) await service.from('projects').delete().eq('id', draftId);
+if (service && draftServiceId) await service.from('services').delete().eq('id', draftServiceId);
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed > 0 ? 1 : 0);

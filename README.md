@@ -173,7 +173,7 @@ with links home and to the portfolio — the app never silently substitutes anot
 ## Content dashboard (admin)
 
 A private **`/admin`** dashboard (Supabase Auth + Postgres + Storage) lets allowlisted
-studio accounts edit the portfolio, hero wall, packages and site settings. It is
+studio accounts edit the portfolio, hero wall, services, packages and site settings. It is
 **additive and off by default**: the public site keeps rendering `src/content/*.ts`,
 and the whole admin UI + Supabase client are code-split into a separate chunk that
 only loads on `/admin` — nothing changes for visitors.
@@ -185,9 +185,11 @@ only loads on `/admin` — nothing changes for visitors.
   migration, then set it to `supabase`. The Supabase read path falls back to the
   static modules on any error, so the site never renders blank.
 - **Security:** Row Level Security is the boundary. Public visitors read published
-  content only; only accounts listed in `admin_users` can write or upload. The
-  service-role key is never in browser code. Existing photographs, slugs, ordering
-  and alt text are seeded verbatim; no prices, client names or Maps URL are invented.
+  content only (projects, their gallery images, active hero frames and published
+  services); only accounts listed in `admin_users` can write or upload. The
+  service-role key is never in browser code. Existing photographs, slugs, ordering,
+  service copy and alt text are seeded verbatim; no prices, client names or Maps URL
+  are invented.
 
 ```
 supabase/
@@ -195,13 +197,17 @@ supabase/
   migrations/*_schema.sql        # enums, tables, indexes, is_admin(), triggers
   migrations/*_rls.sql           # RLS policies + get_public_content() RPC (published-only)
   migrations/*_storage.sql       # 'media' bucket + Storage policies (public read, admin write)
+  migrations/*_services.sql      # reuse: service_categories→services (uuid pk, name, status),
+                                 #   gallery/hero timeline columns, RPC 'services' key
   seed.sql                       # current content, preserving slugs + image associations
 src/
   lib/supabaseClient.ts          # browser client (anon key only)
   lib/types.ts                   # DB row + domain types
   data/mapping.ts                # pure published-only/ordering helpers (unit-tested)
-  data/contentApi.ts             # public reads + adapters + static fallback
-  data/adminApi.ts               # admin CRUD + uploads + validation
+  data/staticContent.ts          # static modules → resolved shapes (no Supabase import)
+  data/SiteContent.tsx           # public content provider (static now, lazy Supabase swap)
+  data/contentApi.ts             # Supabase reads + adapters + static fallback
+  data/adminApi.ts               # admin CRUD (projects/hero/services/packages) + uploads
   auth/AuthContext.tsx           # session + admin-allowlist state
   admin/                         # lazy-loaded dashboard (login, editors, namespaced CSS)
 ```

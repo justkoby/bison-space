@@ -12,7 +12,7 @@ import type {
   GalleryRow,
   HeroColumnRow,
   HeroImageRow,
-  ServiceCategoryRow,
+  ServiceRow,
   PackageRow,
   SiteSettingsRow,
   PortfolioCategory,
@@ -325,13 +325,81 @@ export async function reorderHeroColumn(columnId: HeroColumnId, orderedIds: stri
 
 // ——— Services + packages ——————————————————————————————————————
 
-export async function listServiceCategories(): Promise<ServiceCategoryRow[]> {
+export async function listServices(): Promise<ServiceRow[]> {
   const { data, error } = await getSupabase()
-    .from('service_categories')
+    .from('services')
     .select('*')
     .order('display_order', { ascending: true });
-  if (error) throw new Error(friendlyError(error, 'Could not load service categories.'));
-  return (data ?? []) as ServiceCategoryRow[];
+  if (error) throw new Error(friendlyError(error, 'Could not load services.'));
+  return (data ?? []) as ServiceRow[];
+}
+
+export type ServiceInput = {
+  slug: string;
+  name: string;
+  shortDescription: string;
+  imageId: string | null;
+  displayOrder: number;
+  status: PublishStatus;
+};
+
+export async function createService(input: ServiceInput): Promise<ServiceRow> {
+  const { data, error } = await getSupabase()
+    .from('services')
+    .insert({
+      slug: input.slug,
+      name: input.name,
+      short_description: input.shortDescription,
+      image_id: input.imageId,
+      display_order: input.displayOrder,
+      status: input.status,
+    })
+    .select()
+    .single<ServiceRow>();
+  if (error) {
+    if (error.code === '23505') throw new Error('That slug is already in use. Choose another.');
+    throw new Error(friendlyError(error, 'Could not create the service.'));
+  }
+  return data;
+}
+
+export async function updateService(id: string, input: ServiceInput): Promise<ServiceRow> {
+  const { data, error } = await getSupabase()
+    .from('services')
+    .update({
+      slug: input.slug,
+      name: input.name,
+      short_description: input.shortDescription,
+      image_id: input.imageId,
+      display_order: input.displayOrder,
+      status: input.status,
+    })
+    .eq('id', id)
+    .select()
+    .single<ServiceRow>();
+  if (error) {
+    if (error.code === '23505') throw new Error('That slug is already in use. Choose another.');
+    throw new Error(friendlyError(error, 'Could not update the service.'));
+  }
+  return data;
+}
+
+/** Deleting a service also removes its packages (ON DELETE CASCADE on the slug FK). */
+export async function deleteService(id: string): Promise<void> {
+  const { error } = await getSupabase().from('services').delete().eq('id', id);
+  if (error) throw new Error(friendlyError(error, 'Could not delete the service.'));
+}
+
+/** Persist a new display order for a set of service ids. */
+export async function reorderServices(orderedIds: string[]): Promise<void> {
+  const supabase = getSupabase();
+  for (let index = 0; index < orderedIds.length; index += 1) {
+    const { error } = await supabase
+      .from('services')
+      .update({ display_order: index + 1 })
+      .eq('id', orderedIds[index]);
+    if (error) throw new Error(friendlyError(error, 'Could not reorder services.'));
+  }
 }
 
 export async function listPackages(): Promise<PackageRow[]> {
